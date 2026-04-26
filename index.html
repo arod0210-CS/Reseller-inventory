@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>PalletFlow Inventory</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="phone">
+      <section class="screen login-screen active" id="loginScreen">
+        <div class="brand-badge">PF</div>
+        <h1 class="login-title" data-i18n="loginTitle">LOGIN</h1>
+        <p class="login-subtitle" data-i18n="loginSubtitle">Track pallets. Sell smarter.</p>
+
+        <div class="field">
+          <span class="field-icon">&#9993;</span>
+          <input type="email" value="alberto@palletflow.com" aria-label="Email" />
+        </div>
+
+        <div class="field">
+          <span class="field-icon">&#128274;</span>
+          <input type="password" value="password123" aria-label="Password" />
+          <span class="field-icon">&#128065;</span>
+        </div>
+
+        <div class="login-actions">
+          <span data-i18n="rememberMe">Remember me</span>
+          <span data-i18n="forgotPassword">Forgot Password?</span>
+        </div>
+
+        <button class="btn btn-primary" id="loginBtn" type="button" data-i18n="loginButton">LOGIN</button>
+        <div class="login-footer" data-i18n="loginFooter">Mobile resell inventory dashboard demo</div>
+      </section>
+
+      <section class="screen app-screen" id="dashboardScreen">
+        <main class="main-content">
+          <section class="tab-screen active" id="homeView" data-tab-view="home">
+            <div class="top-wrap">
+              <div class="topbar">
+                <button class="icon-btn" id="menuBtn" type="button" aria-label="Open menu">&#9776;</button>
+                <button class="icon-btn" id="alertsBtn" type="button" aria-label="Open alerts">&#128276;</button>
+              </div>
+              <div class="hello" data-i18n="homeGreeting">Good morning, Alberto</div>
+              <div class="dashboard-title" data-i18n="homeTitle">Inventory Dashboard</div>
+              <p class="dashboard-subtitle" data-i18n="homeSubtitle">Track aging stock, profit, and where every item lives.</p>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-top">
+                  <div class="stat-icon">&#128230;</div>
+                  <div class="stat-label" data-i18n="statAvailable">Available Items</div>
+                </div>
+                <div class="stat-value" id="homeStatAvailable">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <div class="stat-icon">&#128181;</div>
+                  <div class="stat-label" data-i18n="statRevenue">Total Revenue</div>
+                </div>
+                <div class="stat-value" id="homeStatRevenue">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <div class="stat-icon">&#128176;</div>
+                  <div class="stat-label" data-i18n="statProfit">Total Profit</div>
+                </div>
+                <div class="stat-value" id="homeStatProfit">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <div class="stat-icon">&#9200;</div>
+                  <div class="stat-label" data-i18n="statAge90">90+ Day Items</div>
+                </div>
+                <div class="stat-value" id="homeStatAge90">0</div>
+              </div>
+            </div>
+
+            <div class="panel-grid home-overview-grid">
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="age30">30+ Days</div>
+                <div class="mini-value" id="homeAge30">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="age60">60+ Days</div>
+                <div class="mini-value" id="homeAge60">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="inventoryValue">Inventory Value</div>
+                <div class="mini-value" id="homeInventoryValue">$0</div>
+              </div>
+            </div>
+
+            <div class="action-grid">
+              <button class="action-card" id="homeAddBtn" type="button">
+                <span class="action-icon">+</span>
+                <span class="action-copy">
+                  <span class="action-title" data-i18n="quickActionAdd">Add Item</span>
+                  <span class="action-subtitle" data-i18n="itemSheetAddSubtitle">Use a fast entry or fill the full inventory record.</span>
+                </span>
+              </button>
+              <button class="action-card" id="homeScannerBtn" type="button">
+                <span class="action-icon">&#128248;</span>
+                <span class="action-copy">
+                  <span class="action-title" data-i18n="quickActionScanner">AI Scanner</span>
+                  <span class="action-subtitle" data-i18n="scannerBanner">AI lookup is not connected yet. Manual entry is available.</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="search-wrap">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" id="homeSearchInput" data-i18n-placeholder="placeholderSearchAll" placeholder="Search by name, item ID, barcode, notes..." />
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="recentItems">Recent Items</div>
+              </div>
+              <div class="item-list" id="homeRecentList"></div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="homeAttention">Needs Attention</div>
+              </div>
+              <div class="item-list" id="homeAttentionList"></div>
+            </div>
+          </section>
+
+          <section class="tab-screen" id="inventoryView" data-tab-view="inventory">
+            <div class="sticky-page-head">
+              <div class="page-hero compact-hero">
+                <div class="page-kicker" data-i18n="inventoryKicker">Manage stock</div>
+                <h2 data-i18n="inventoryTitle">Inventory</h2>
+                <p data-i18n="inventorySubtitle">Track storage, pricing, status, and aging from one list.</p>
+                <div class="hero-actions">
+                  <button class="btn btn-secondary hero-btn" id="inventoryAddBtn" type="button" data-i18n="addNewItem">Add New Item</button>
+                  <button class="btn btn-secondary hero-btn" id="openFilterBtn" type="button" data-i18n="filters">Filters</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-grid">
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="inventoryAvailable">Available</div>
+                <div class="mini-value" id="inventoryAvailableCount">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="inventorySold">Sold</div>
+                <div class="mini-value" id="inventorySoldCount">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="inventoryLocations">Locations</div>
+                <div class="mini-value" id="inventoryLocationCount">0</div>
+              </div>
+            </div>
+
+            <div class="search-wrap">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" id="inventorySearchInput" data-i18n-placeholder="placeholderSearchInventory" placeholder="Search name, barcode, item ID, notes..." />
+            </div>
+
+            <div class="toolbar-card">
+              <div class="toolbar-label" data-i18n="sortLabel">Sort</div>
+              <select id="inventorySortSelect" class="toolbar-select" aria-label="Sort inventory">
+                <option value="newest" data-i18n="sortNewest">Newest</option>
+                <option value="oldest" data-i18n="sortOldest">Oldest</option>
+                <option value="name" data-i18n="sortName">Name A-Z</option>
+                <option value="listed-high" data-i18n="sortListedHigh">Listed price high-low</option>
+                <option value="listed-low" data-i18n="sortListedLow">Listed price low-high</option>
+                <option value="profit-high" data-i18n="sortProfitHigh">Profit high-low</option>
+                <option value="age-high" data-i18n="sortAgeHigh">Oldest first</option>
+                <option value="quantity-low" data-i18n="sortQuantityLow">Quantity low-high</option>
+              </select>
+            </div>
+
+            <div class="filter-summary" id="inventoryFilterSummary"></div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="inventoryListTitle">Find Item</div>
+                <div class="section-caption" data-i18n="inventoryListCaption">Tap a card for details, labels, and sale actions.</div>
+              </div>
+              <div class="inventory-list" id="inventoryList"></div>
+            </div>
+          </section>
+
+          <section class="tab-screen" id="analyticsView" data-tab-view="analytics">
+            <div class="sticky-page-head">
+              <div class="page-hero analytics-hero">
+                <div class="page-kicker" data-i18n="analyticsKicker">Chart view</div>
+                <h2 data-i18n="analyticsTitle">Analytics</h2>
+                <p data-i18n="analyticsSubtitle">Break down platform performance, category mix, and earnings.</p>
+              </div>
+            </div>
+
+            <div class="sales-grid analytics-summary-grid">
+              <div class="sales-stat-card">
+                <div class="sales-stat-label" data-i18n="totalRevenue">Total Revenue</div>
+                <div class="sales-stat-value" id="analyticsRevenue">$0</div>
+              </div>
+              <div class="sales-stat-card">
+                <div class="sales-stat-label" data-i18n="totalCost">Total Cost</div>
+                <div class="sales-stat-value" id="analyticsCost">$0</div>
+              </div>
+              <div class="sales-stat-card">
+                <div class="sales-stat-label" data-i18n="totalProfit">Total Profit</div>
+                <div class="sales-stat-value" id="analyticsProfit">$0</div>
+              </div>
+              <div class="sales-stat-card">
+                <div class="sales-stat-label" data-i18n="averageProfitItem">Average Profit / Item</div>
+                <div class="sales-stat-value" id="analyticsAverageProfit">$0</div>
+              </div>
+            </div>
+
+            <div class="section-card chart-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="chartAreaTitle">Analytics Chart</div>
+                <select id="analyticsChartSelect" class="toolbar-select narrow-select" aria-label="Select analytics chart">
+                  <option value="sales-platform" data-i18n="chartSalesByPlatform">Sales by platform</option>
+                  <option value="inventory-category" data-i18n="chartInventoryByCategory">Inventory by category</option>
+                  <option value="sold-category" data-i18n="chartSoldByCategory">Sold items by category</option>
+                  <option value="profit-platform" data-i18n="chartProfitByPlatform">Profit by platform</option>
+                  <option value="inventory-location" data-i18n="chartInventoryByLocation">Inventory by storage location</option>
+                </select>
+              </div>
+              <div class="chart-empty" id="analyticsChartEmpty"></div>
+              <div class="chart-layout">
+                <div id="analyticsChart" class="chart-target"></div>
+                <div id="analyticsLegend" class="chart-legend"></div>
+              </div>
+            </div>
+
+            <div class="earnings-grid" id="earningsGrid"></div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="profileSummaryTitle">Business Snapshot</div>
+              </div>
+              <div class="detail-list">
+                <div class="detail-row">
+                  <span data-i18n="bestPlatform">Best-selling Platform</span>
+                  <strong id="analyticsBestPlatform">--</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="bestCategory">Best-selling Category</span>
+                  <strong id="analyticsBestCategory">--</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="unsoldInventoryValue">Unsold Inventory Value</span>
+                  <strong id="analyticsUnsoldValue">$0</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="soldInventoryValue">Sold Inventory Value</span>
+                  <strong id="analyticsSoldValue">$0</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-screen" id="financeView" data-tab-view="finance">
+            <div class="sticky-page-head">
+              <div class="page-hero finance-hero">
+                <div class="page-kicker" data-i18n="financeKicker">Money flow</div>
+                <h2 data-i18n="financeTitle">Finance</h2>
+                <p data-i18n="financeSubtitle">Review revenue, cost, and profit across time ranges.</p>
+              </div>
+              <div class="chip-row range-row" id="financeRangeRow">
+                <button class="chip active" data-range="today" type="button" data-i18n="rangeToday">Today</button>
+                <button class="chip" data-range="week" type="button" data-i18n="rangeWeek">This Week</button>
+                <button class="chip" data-range="month" type="button" data-i18n="rangeMonth">This Month</button>
+                <button class="chip" data-range="year" type="button" data-i18n="rangeYear">This Year</button>
+                <button class="chip" data-range="all" type="button" data-i18n="rangeAll">All Time</button>
+              </div>
+            </div>
+
+            <div class="finance-grid">
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricRevenue">Revenue</div>
+                <div class="finance-card-value" id="financeRevenue">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricCost">Cost</div>
+                <div class="finance-card-value" id="financeCost">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricProfit">Profit</div>
+                <div class="finance-card-value" id="financeProfit">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricSoldItems">Sold Items</div>
+                <div class="finance-card-value" id="financeSoldItems">0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricAverageSale">Average Sale Price</div>
+                <div class="finance-card-value" id="financeAverageSale">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricAverageProfit">Average Profit</div>
+                <div class="finance-card-value" id="financeAverageProfit">$0</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="profileSummaryTitle">Business Snapshot</div>
+              </div>
+              <div class="detail-list">
+                <div class="detail-row">
+                  <span data-i18n="bestPlatform">Best-selling Platform</span>
+                  <strong id="financeBestPlatform">--</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="bestCategory">Best-selling Category</span>
+                  <strong id="financeBestCategory">--</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="financeMissingSoldPrice">Sold items missing price</span>
+                  <strong id="financeMissingPrice">0</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="financeTimelineTitle">Recent Sales</div>
+                <div class="section-caption" data-i18n="financeTimelineCaption">Revenue entries with platform, price, and profit.</div>
+              </div>
+              <div class="item-list" id="financeSalesList"></div>
+            </div>
+          </section>
+
+          <section class="tab-screen" id="profileView" data-tab-view="profile">
+            <div class="sticky-page-head">
+              <div class="page-hero profile-hero">
+                <div class="page-kicker" data-i18n="profileKicker">Workspace</div>
+                <h2 data-i18n="profileTitle">Profile</h2>
+                <p data-i18n="profileSubtitle">Local app tools, language, exports, and demo controls.</p>
+              </div>
+            </div>
+
+            <div class="profile-card">
+              <div class="profile-avatar">A</div>
+              <div>
+                <div class="profile-name">Alberto</div>
+                <div class="profile-email">alberto@palletflow.com</div>
+              </div>
+            </div>
+
+            <div class="panel-grid">
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="currentListings">Current Listings</div>
+                <div class="mini-value" id="profileCurrentListings">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="soldHistory">Sold History</div>
+                <div class="mini-value" id="profileSoldHistory">0</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-label" data-i18n="potentialMargin">Potential Profit</div>
+                <div class="mini-value" id="profilePotentialProfit">$0</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="profileSummaryTitle">Business Snapshot</div>
+              </div>
+              <div class="detail-list">
+                <div class="detail-row">
+                  <span data-i18n="totalCost">Total Cost</span>
+                  <strong id="profileTotalCost">$0</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="totalRevenue">Total Revenue</span>
+                  <strong id="profileTotalRevenue">$0</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="totalProfit">Total Profit</span>
+                  <strong id="profileTotalProfit">$0</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="currentLanguage">Current Language</span>
+                  <strong id="profileLanguageValue">English</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="profileStorageTitle">Workspace Status</div>
+                <div class="section-caption" id="profileStorageCaption" data-i18n="profileStorageCaption">Saved locally on this device</div>
+              </div>
+              <div class="detail-list">
+                <div class="detail-row">
+                  <span data-i18n="storageType">Storage</span>
+                  <strong data-i18n="storageBrowser">Browser localStorage</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="lastUpdated">Last Updated</span>
+                  <strong id="profileLastUpdated">--</strong>
+                </div>
+                <div class="detail-row">
+                  <span data-i18n="trackedCategories">Tracked Categories</span>
+                  <strong id="profileCategories">--</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="toolsTitle">Tools</div>
+                <div class="section-caption" data-i18n="toolsCaption">Export, scan, or reset this app demo.</div>
+              </div>
+              <div class="tools-stack">
+                <button class="btn btn-secondary" id="profileAddBtn" type="button" data-i18n="addItem">Add Item</button>
+                <button class="btn btn-secondary" id="profileScannerBtn" type="button" data-i18n="openScanner">AI Scanner</button>
+                <button class="btn btn-secondary" id="exportCsvBtn" type="button" data-i18n="exportCsv">Export CSV</button>
+                <button class="btn btn-danger" id="resetDemoBtn" type="button" data-i18n="resetDemo">Reset Demo Data</button>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <nav class="bottom-nav" aria-label="Primary">
+          <button class="nav-item active" data-tab="home" type="button" aria-label="Go to home">
+            <span class="nav-icon-wrap"><span class="nav-icon">&#127968;</span></span>
+            <span class="nav-label">Home</span>
+          </button>
+          <button class="nav-item" data-tab="inventory" type="button" aria-label="Go to inventory">
+            <span class="nav-icon-wrap"><span class="nav-icon">&#128230;</span></span>
+            <span class="nav-label">Inventory</span>
+          </button>
+          <button class="nav-item" data-tab="analytics" type="button" aria-label="Go to analytics">
+            <span class="nav-icon-wrap"><span class="nav-icon">&#129534;</span></span>
+            <span class="nav-label">Analytics</span>
+          </button>
+          <div class="fab-wrap">
+            <button class="fab" id="openSheetBtn" type="button" aria-label="Add item">+</button>
+          </div>
+          <button class="nav-item" data-tab="finance" type="button" aria-label="Go to finance">
+            <span class="nav-icon-wrap"><span class="nav-icon">&#128181;</span></span>
+            <span class="nav-label">Finance</span>
+          </button>
+          <button class="nav-item" data-tab="profile" type="button" aria-label="Go to profile">
+            <span class="nav-icon-wrap"><span class="nav-icon">&#128100;</span></span>
+            <span class="nav-label">Profile</span>
+          </button>
+        </nav>
+
+        <div class="modal-backdrop panel-backdrop" id="menuBackdrop">
+          <div class="floating-panel menu-panel">
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="menuTitle">Quick Menu</div>
+                <div class="sheet-subtitle" data-i18n="menuSubtitle">Settings, language, and shortcuts.</div>
+              </div>
+              <button class="close-btn" id="closeMenuBtn" type="button" aria-label="Close menu">&#10005;</button>
+            </div>
+            <div class="menu-section">
+              <div class="menu-label" data-i18n="menuLanguageTitle">Language</div>
+              <div class="language-switch">
+                <button class="language-chip active" id="languageEnBtn" data-language="en" type="button" data-i18n="english">English</button>
+                <button class="language-chip" id="languageEsBtn" data-language="es" type="button" data-i18n="spanish">Spanish</button>
+              </div>
+              <div class="menu-helper" id="menuLanguageCurrent" data-i18n="menuLanguageCurrent">Selected language</div>
+            </div>
+            <div class="menu-actions">
+              <button class="btn btn-secondary" id="menuScannerBtn" type="button" data-i18n="menuScanner">Open AI Scanner</button>
+              <button class="btn btn-secondary" id="menuExportBtn" type="button" data-i18n="menuExport">Export Current CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop panel-backdrop" id="alertsBackdrop">
+          <div class="floating-panel">
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="alertsTitle">Age Alerts</div>
+                <div class="sheet-subtitle" data-i18n="alertsSubtitle">Available items that have been sitting too long.</div>
+              </div>
+              <button class="close-btn" id="closeAlertsBtn" type="button" aria-label="Close alerts">&#10005;</button>
+            </div>
+            <div class="alert-list" id="alertsList"></div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="filterBackdrop">
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="filters">Filters</div>
+                <div class="sheet-subtitle" data-i18n="inventorySubtitle">Track storage, pricing, status, and aging from one list.</div>
+              </div>
+              <button class="close-btn" id="closeFilterBtn" type="button" aria-label="Close filters">&#10005;</button>
+            </div>
+            <div class="form-grid">
+              <div class="input-wrap">
+                <label for="filterCategorySelect" data-i18n="filterCategory">Category</label>
+                <select id="filterCategorySelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="electronics" data-i18n="categoryElectronics">Electronics</option>
+                  <option value="vintage" data-i18n="categoryVintage">Vintage</option>
+                  <option value="clothing" data-i18n="categoryClothing">Clothing</option>
+                  <option value="home" data-i18n="categoryHome">Home</option>
+                  <option value="tools" data-i18n="categoryTools">Tools</option>
+                  <option value="toys" data-i18n="categoryToys">Toys</option>
+                  <option value="appliances" data-i18n="categoryAppliances">Appliances</option>
+                  <option value="furniture" data-i18n="categoryFurniture">Furniture</option>
+                  <option value="other" data-i18n="categoryOther">Other</option>
+                </select>
+              </div>
+
+              <div class="input-wrap">
+                <label for="filterLocationSelect" data-i18n="filterLocation">Storage Location</label>
+                <select id="filterLocationSelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="house" data-i18n="locationHouse">House</option>
+                  <option value="car-1" data-i18n="locationCar1">Car compartment 1</option>
+                  <option value="car-2" data-i18n="locationCar2">Car compartment 2</option>
+                  <option value="storage" data-i18n="locationStorage">Storage</option>
+                  <option value="other" data-i18n="locationOther">Other / Custom</option>
+                  <option value="unknown" data-i18n="locationUnknown">Unknown</option>
+                </select>
+              </div>
+
+              <div class="input-wrap">
+                <label for="filterStatusSelect" data-i18n="filterSaleStatus">Sale Status</label>
+                <select id="filterStatusSelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="available" data-i18n="statusAvailable">Available</option>
+                  <option value="sold" data-i18n="statusSold">Sold</option>
+                </select>
+              </div>
+
+              <div class="input-wrap">
+                <label for="filterAgeSelect" data-i18n="filterAge">Age Alert</label>
+                <select id="filterAgeSelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="new" data-i18n="filterAgingNew">New (0-29 days)</option>
+                  <option value="30" data-i18n="filterAging30">30-59 days</option>
+                  <option value="60" data-i18n="filterAging60">60-89 days</option>
+                  <option value="90" data-i18n="filterAging90">90+ days</option>
+                </select>
+              </div>
+
+              <div class="button-row">
+                <button class="btn btn-secondary" id="clearFilterBtn" type="button" data-i18n="clearFilters">Clear Filters</button>
+                <button class="btn btn-primary" id="applyFilterBtn" type="button" data-i18n="applyFilters">Apply Filters</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="sheetBackdrop">
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" id="itemSheetTitle" data-i18n="itemSheetAddTitle">Add Item</div>
+                <div class="sheet-subtitle" id="itemSheetSubtitle" data-i18n="itemSheetAddSubtitle">Use a fast entry or fill the full inventory record.</div>
+              </div>
+              <button class="close-btn" id="closeSheetBtn" type="button" aria-label="Close item sheet">&#10005;</button>
+            </div>
+
+            <div class="mode-switch" id="modeSwitch">
+              <button class="mode-btn active" data-mode="quick" type="button" data-i18n="quickAdd">Quick Add</button>
+              <button class="mode-btn" data-mode="full" type="button" data-i18n="fullAdd">Full Add</button>
+            </div>
+
+            <div id="quickMode">
+              <div class="form-grid">
+                <div class="input-wrap">
+                  <label for="quickName" data-i18n="quickName">Item Name</label>
+                  <input type="text" id="quickName" data-i18n-placeholder="placeholderQuickName" placeholder="Example: Xbox Controller" />
+                </div>
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="quickCategory" data-i18n="quickCategory">Category</label>
+                    <select id="quickCategory">
+                      <option value="electronics" data-i18n="categoryElectronics">Electronics</option>
+                      <option value="vintage" data-i18n="categoryVintage">Vintage</option>
+                      <option value="clothing" data-i18n="categoryClothing">Clothing</option>
+                      <option value="home" data-i18n="categoryHome">Home</option>
+                      <option value="tools" data-i18n="categoryTools">Tools</option>
+                      <option value="toys" data-i18n="categoryToys">Toys</option>
+                      <option value="appliances" data-i18n="categoryAppliances">Appliances</option>
+                      <option value="furniture" data-i18n="categoryFurniture">Furniture</option>
+                      <option value="other" data-i18n="categoryOther">Other</option>
+                    </select>
+                  </div>
+                  <div class="input-wrap">
+                    <label for="quickQuantity" data-i18n="quickQuantity">Quantity (optional)</label>
+                    <input type="number" id="quickQuantity" min="1" data-i18n-placeholder="placeholderQuickQuantity" placeholder="1" />
+                  </div>
+                </div>
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="quickCost" data-i18n="quickCost">Purchase Price / Cost</label>
+                    <input type="number" id="quickCost" min="0" step="0.01" data-i18n-placeholder="placeholderQuickCost" placeholder="25" />
+                  </div>
+                  <div class="input-wrap">
+                    <label for="quickListedPrice" data-i18n="quickListedPrice">Online / Listed Price</label>
+                    <input type="number" id="quickListedPrice" min="0" step="0.01" data-i18n-placeholder="placeholderQuickListed" placeholder="45" />
+                  </div>
+                </div>
+                <div class="input-wrap">
+                  <label for="quickStorage" data-i18n="quickStorage">Storage Location</label>
+                  <select id="quickStorage">
+                    <option value="">Select...</option>
+                    <option value="house" data-i18n="locationHouse">House</option>
+                    <option value="car-1" data-i18n="locationCar1">Car compartment 1</option>
+                    <option value="car-2" data-i18n="locationCar2">Car compartment 2</option>
+                    <option value="storage" data-i18n="locationStorage">Storage</option>
+                    <option value="other" data-i18n="locationOther">Other / Custom</option>
+                  </select>
+                </div>
+                <div class="input-wrap hidden" id="quickCustomLocationWrap">
+                  <label for="quickCustomLocation" data-i18n="quickCustomLocation">Custom Location</label>
+                  <input type="text" id="quickCustomLocation" data-i18n-placeholder="placeholderCustomLocation" placeholder="Garage shelf A" />
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary" id="quickScannerBtn" type="button" data-i18n="openAiScanner">Open AI Scanner</button>
+                  <button class="btn btn-primary" id="saveQuickBtn" type="button" data-i18n="quickSave">Save Quick Item</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="fullMode" class="hidden">
+              <div class="form-grid">
+                <div class="input-wrap">
+                  <label for="fullName" data-i18n="fullName">Item Name</label>
+                  <input type="text" id="fullName" data-i18n-placeholder="placeholderQuickName" placeholder="Example: Xbox Controller" />
+                </div>
+                <div class="input-wrap">
+                  <label for="fullDescription" data-i18n="fullDescription">Item Description</label>
+                  <textarea id="fullDescription" data-i18n-placeholder="placeholderDescription" placeholder="Condition, flaws, bundle contents, and what makes the item sellable..."></textarea>
+                </div>
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="fullCategory" data-i18n="fullCategory">Category / Item Type</label>
+                    <select id="fullCategory">
+                      <option value="electronics" data-i18n="categoryElectronics">Electronics</option>
+                      <option value="vintage" data-i18n="categoryVintage">Vintage</option>
+                      <option value="clothing" data-i18n="categoryClothing">Clothing</option>
+                      <option value="home" data-i18n="categoryHome">Home</option>
+                      <option value="tools" data-i18n="categoryTools">Tools</option>
+                      <option value="toys" data-i18n="categoryToys">Toys</option>
+                      <option value="appliances" data-i18n="categoryAppliances">Appliances</option>
+                      <option value="furniture" data-i18n="categoryFurniture">Furniture</option>
+                      <option value="other" data-i18n="categoryOther">Other</option>
+                    </select>
+                  </div>
+                  <div class="input-wrap">
+                    <label for="fullSource" data-i18n="fullSource">Source / Pallet</label>
+                    <input type="text" id="fullSource" data-i18n-placeholder="placeholderSource" placeholder="Target pallet 04/26" />
+                  </div>
+                </div>
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="fullCost" data-i18n="fullCost">Purchase Price / Cost</label>
+                    <input type="number" id="fullCost" min="0" step="0.01" data-i18n-placeholder="placeholderQuickCost" placeholder="25" />
+                  </div>
+                  <div class="input-wrap">
+                    <label for="fullListedPrice" data-i18n="fullListedPrice">Online / Listed Price</label>
+                    <input type="number" id="fullListedPrice" min="0" step="0.01" data-i18n-placeholder="placeholderQuickListed" placeholder="45" />
+                  </div>
+                </div>
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="fullQuantity" data-i18n="fullQuantity">Quantity (optional)</label>
+                    <input type="number" id="fullQuantity" min="1" data-i18n-placeholder="placeholderQuickQuantity" placeholder="1" />
+                  </div>
+                  <div class="input-wrap">
+                    <label for="fullDateAdded" data-i18n="fullDateAdded">Date Added</label>
+                    <input type="date" id="fullDateAdded" />
+                  </div>
+                </div>
+                <div class="input-wrap">
+                  <label for="fullStorage" data-i18n="fullStorage">Storage Location</label>
+                  <select id="fullStorage">
+                    <option value="">Select...</option>
+                    <option value="house" data-i18n="locationHouse">House</option>
+                    <option value="car-1" data-i18n="locationCar1">Car compartment 1</option>
+                    <option value="car-2" data-i18n="locationCar2">Car compartment 2</option>
+                    <option value="storage" data-i18n="locationStorage">Storage</option>
+                    <option value="other" data-i18n="locationOther">Other / Custom</option>
+                  </select>
+                </div>
+                <div class="input-wrap hidden" id="fullCustomLocationWrap">
+                  <label for="fullCustomLocation" data-i18n="fullCustomLocation">Custom Location</label>
+                  <input type="text" id="fullCustomLocation" data-i18n-placeholder="placeholderCustomLocation" placeholder="Garage shelf A" />
+                </div>
+                <div class="input-wrap">
+                  <label for="fullBarcode" data-i18n="fullOriginalBarcode">Original Barcode / UPC</label>
+                  <input type="text" id="fullBarcode" data-i18n-placeholder="placeholderBarcode" placeholder="Original UPC / barcode" />
+                </div>
+                <div class="input-wrap">
+                  <label for="fullImageInput" data-i18n="fullImage">Item Image</label>
+                  <input type="file" id="fullImageInput" accept="image/*" />
+                  <div class="field-hint" data-i18n="fieldImageHint">Stores a compressed local image so the app still works offline.</div>
+                  <div class="image-preview-frame hidden" id="fullImagePreviewWrap">
+                    <img id="fullImagePreview" alt="Item preview" />
+                  </div>
+                </div>
+                <div class="input-wrap">
+                  <label for="fullSaleStatus" data-i18n="fullSaleStatus">Sale Status</label>
+                  <select id="fullSaleStatus">
+                    <option value="available" data-i18n="statusAvailable">Available</option>
+                    <option value="sold" data-i18n="statusSold">Sold</option>
+                  </select>
+                </div>
+                <div id="fullSoldFields" class="form-grid hidden">
+                  <div class="form-grid two">
+                    <div class="input-wrap">
+                      <label for="fullSoldPrice" data-i18n="fullSoldPrice">Sold Price</label>
+                      <input type="number" id="fullSoldPrice" min="0" step="0.01" />
+                    </div>
+                    <div class="input-wrap">
+                      <label for="fullDateSold" data-i18n="fullDateSold">Date Sold</label>
+                      <input type="date" id="fullDateSold" />
+                    </div>
+                  </div>
+                  <div class="input-wrap">
+                    <label for="fullSoldPlatform" data-i18n="fullSoldPlatform">Where It Was Sold</label>
+                    <select id="fullSoldPlatform">
+                      <option value="">Select...</option>
+                      <option value="facebook" data-i18n="platformFacebook">Facebook Marketplace</option>
+                      <option value="ebay" data-i18n="platformEbay">eBay</option>
+                      <option value="in-person" data-i18n="platformInPerson">In person</option>
+                      <option value="other" data-i18n="platformOther">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="input-wrap">
+                  <label for="fullNotes" data-i18n="fullNotes">Notes</label>
+                  <textarea id="fullNotes" data-i18n-placeholder="placeholderNotes" placeholder="Extra notes, defects, bundle info, or pickup instructions..."></textarea>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary" id="fullScannerBtn" type="button" data-i18n="openAiScanner">Open AI Scanner</button>
+                  <button class="btn btn-primary" id="saveFullBtn" type="button" data-i18n="fullSave">Save Item</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="detailBackdrop">
+          <div class="sheet detail-sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="detailTitle">Item Detail</div>
+                <div class="sheet-subtitle" id="detailSubtitle" data-i18n="detailSubtitle">Inventory record</div>
+              </div>
+              <button class="close-btn" id="closeDetailBtn" type="button" aria-label="Close item detail">&#10005;</button>
+            </div>
+            <div class="detail-hero">
+              <div class="detail-visual">
+                <div class="detail-avatar" id="detailAvatar">PF</div>
+                <div class="detail-image-frame hidden" id="detailImageWrap">
+                  <img id="detailImage" alt="Item image" />
+                </div>
+              </div>
+              <div class="detail-copy">
+                <div class="detail-item-name" id="detailName">Item name</div>
+                <div class="detail-item-subtitle" id="detailMeta">INV-20260426-0001</div>
+                <div class="detail-pill-row">
+                  <span class="status" id="detailStatusPill">Available</span>
+                  <span class="detail-pill" id="detailAgePill">New</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-grid" id="detailFieldGrid"></div>
+            <div class="detail-section-card">
+              <div class="section-header detail-section-header">
+                <div class="section-title" data-i18n="detailHistory">History</div>
+              </div>
+              <div class="history-list" id="detailHistoryList"></div>
+            </div>
+            <div class="detail-actions">
+              <button class="btn btn-secondary" id="detailEditBtn" type="button" data-i18n="editItem">Edit Item</button>
+              <button class="btn btn-primary" id="detailSellBtn" type="button" data-i18n="markSold">Mark Sold</button>
+              <button class="btn btn-secondary" id="detailRestockBtn" type="button" data-i18n="restock">Restock</button>
+              <button class="btn btn-secondary" id="detailLabelBtn" type="button" data-i18n="detailLabel">Label Preview</button>
+              <button class="btn btn-danger" id="detailDeleteBtn" type="button" data-i18n="deleteItem">Delete Item</button>
+              <button class="btn btn-secondary" id="detailCloseBtn" type="button" data-i18n="close">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="transactionBackdrop">
+          <div class="sheet action-sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" id="transactionTitle" data-i18n="transactionSellTitle">Mark Item as Sold</div>
+                <div class="sheet-subtitle" id="transactionSubtitle" data-i18n="transactionSellSubtitle">Record the sale price, date, and platform.</div>
+              </div>
+              <button class="close-btn" id="closeTransactionBtn" type="button" aria-label="Close transaction">&#10005;</button>
+            </div>
+            <div class="form-grid">
+              <div class="input-wrap">
+                <label for="transactionQuantity" data-i18n="transactionQuantity">Quantity</label>
+                <input type="number" id="transactionQuantity" min="1" />
+              </div>
+              <div id="transactionSaleFields" class="form-grid">
+                <div class="form-grid two">
+                  <div class="input-wrap">
+                    <label for="transactionSoldPrice" data-i18n="transactionSoldPrice">Sold Price</label>
+                    <input type="number" id="transactionSoldPrice" min="0" step="0.01" />
+                  </div>
+                  <div class="input-wrap">
+                    <label for="transactionDateSold" data-i18n="transactionDateSold">Date Sold</label>
+                    <input type="date" id="transactionDateSold" />
+                  </div>
+                </div>
+                <div class="input-wrap">
+                  <label for="transactionSoldPlatform" data-i18n="transactionPlatform">Where It Was Sold</label>
+                  <select id="transactionSoldPlatform">
+                    <option value="">Select...</option>
+                    <option value="facebook" data-i18n="platformFacebook">Facebook Marketplace</option>
+                    <option value="ebay" data-i18n="platformEbay">eBay</option>
+                    <option value="in-person" data-i18n="platformInPerson">In person</option>
+                    <option value="other" data-i18n="platformOther">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="input-wrap">
+                <label for="transactionNote" data-i18n="transactionNote">Note</label>
+                <textarea id="transactionNote" data-i18n-placeholder="placeholderTransactionNote" placeholder="Optional note for this sale or restock..."></textarea>
+              </div>
+              <button class="btn btn-primary" id="transactionSubmitBtn" type="button" data-i18n="transactionSaveSale">Save Sale</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="scannerBackdrop">
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="scannerTitle">AI Scanner</div>
+                <div class="sheet-subtitle" data-i18n="scannerSubtitle">Future-ready barcode and photo intake.</div>
+              </div>
+              <button class="close-btn" id="closeScannerBtn" type="button" aria-label="Close scanner">&#10005;</button>
+            </div>
+            <div class="banner" data-i18n="scannerBanner">AI lookup is not connected yet. Manual entry is available.</div>
+            <div class="form-grid">
+              <div class="input-wrap">
+                <label for="scannerBarcodeInput" data-i18n="scannerBarcode">Scan / Enter Barcode</label>
+                <input type="text" id="scannerBarcodeInput" data-i18n-placeholder="placeholderScannerBarcode" placeholder="Enter barcode manually" />
+              </div>
+              <div class="input-wrap">
+                <label for="scannerPhotoInput" data-i18n="scannerPhoto">Upload or Take Photo</label>
+                <input type="file" id="scannerPhotoInput" accept="image/*" />
+                <div class="image-preview-frame hidden" id="scannerPhotoPreviewWrap">
+                  <img id="scannerPhotoPreview" alt="Scanner preview" />
+                </div>
+              </div>
+              <div class="input-wrap">
+                <label for="scannerName" data-i18n="scannerManualName">Suggested Item Name</label>
+                <input type="text" id="scannerName" data-i18n-placeholder="placeholderScannerName" placeholder="Manual item name" />
+              </div>
+              <div class="input-wrap">
+                <label for="scannerDescription" data-i18n="scannerManualDescription">Suggested Description</label>
+                <textarea id="scannerDescription" data-i18n-placeholder="placeholderScannerDescription" placeholder="Manual description if AI is unavailable"></textarea>
+              </div>
+              <div class="form-grid two">
+                <div class="input-wrap">
+                  <label for="scannerCategory" data-i18n="scannerManualCategory">Suggested Category</label>
+                  <select id="scannerCategory">
+                    <option value="electronics" data-i18n="categoryElectronics">Electronics</option>
+                    <option value="vintage" data-i18n="categoryVintage">Vintage</option>
+                    <option value="clothing" data-i18n="categoryClothing">Clothing</option>
+                    <option value="home" data-i18n="categoryHome">Home</option>
+                    <option value="tools" data-i18n="categoryTools">Tools</option>
+                    <option value="toys" data-i18n="categoryToys">Toys</option>
+                    <option value="appliances" data-i18n="categoryAppliances">Appliances</option>
+                    <option value="furniture" data-i18n="categoryFurniture">Furniture</option>
+                    <option value="other" data-i18n="categoryOther">Other</option>
+                  </select>
+                </div>
+                <div class="input-wrap">
+                  <label for="scannerPrice" data-i18n="scannerManualPrice">Estimated Listed Price</label>
+                  <input type="number" id="scannerPrice" min="0" step="0.01" data-i18n-placeholder="placeholderScannerPrice" placeholder="Estimated price" />
+                </div>
+              </div>
+              <div class="button-row">
+                <button class="btn btn-secondary" id="scannerTryBtn" type="button" data-i18n="scannerTry">Try AI Fill</button>
+                <button class="btn btn-primary" id="scannerUseBtn" type="button" data-i18n="scannerUse">Use In Add Form</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="labelBackdrop">
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <div>
+                <div class="sheet-title" data-i18n="labelTitle">Label Preview</div>
+                <div class="sheet-subtitle" data-i18n="labelSubtitle">Print or download a ready-to-stick item label.</div>
+              </div>
+              <button class="close-btn" id="closeLabelBtn" type="button" aria-label="Close label preview">&#10005;</button>
+            </div>
+            <div id="labelPreview"></div>
+            <div class="button-row stacked">
+              <button class="btn btn-primary" id="printLabelBtn" type="button" data-i18n="printLabel">Print Label</button>
+              <button class="btn btn-secondary" id="downloadLabelBtn" type="button" data-i18n="downloadLabel">Download Label</button>
+              <button class="btn btn-secondary" id="copyItemIdBtn" type="button" data-i18n="copyItemId">Copy Item ID</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="inventory.js"></script>
+  <script src="storage.js"></script>
+  <script src="finance.js"></script>
+  <script src="analytics.js"></script>
+  <script src="scanner.js"></script>
+  <script src="labels.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
