@@ -1,0 +1,12 @@
+{
+  "name": "reseller-inventory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based reseller inventory management app.",
+  "scripts": {
+    "lint": "node --check app.js && node --check inventory.js && node --check storage.js && node --check finance.js && node --check analytics.js && node --check scanner.js && node --check labels.js && node --check i18n.js",
+    "test": "node tests/inventory.test.js",
+    "build": "npm run lint"
+  },
+  "devDependencies": {}
+}

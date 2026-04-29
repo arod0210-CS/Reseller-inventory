@@ -174,6 +174,7 @@
                 <option value="profit-high" data-i18n="sortProfitHigh">Profit high-low</option>
                 <option value="age-high" data-i18n="sortAgeHigh">Oldest first</option>
                 <option value="quantity-low" data-i18n="sortQuantityLow">Quantity low-high</option>
+                <option value="status" data-i18n="sortStatus">Status</option>
               </select>
             </div>
 
@@ -532,8 +533,11 @@
                 <label for="filterStatusSelect" data-i18n="filterSaleStatus">Sale Status</label>
                 <select id="filterStatusSelect">
                   <option value="all" data-i18n="filterAll">All</option>
+                  <option value="draft" data-i18n="statusDraft">Draft</option>
+                  <option value="listed" data-i18n="statusListed">Listed</option>
                   <option value="available" data-i18n="statusAvailable">Available</option>
                   <option value="sold" data-i18n="statusSold">Sold</option>
+                  <option value="archived" data-i18n="statusArchived">Archived</option>
                 </select>
               </div>
 
@@ -660,6 +664,15 @@
                     <input type="text" id="fullSource" data-i18n-placeholder="placeholderSource" placeholder="Target pallet 04/26" />
                   </div>
                 </div>
+                <div class="input-wrap">
+                  <label for="fullCondition" data-i18n="fullCondition">Condition</label>
+                  <select id="fullCondition">
+                    <option value="new" data-i18n="conditionNew">New</option>
+                    <option value="open-box" data-i18n="conditionOpenBox">Open box</option>
+                    <option value="used" data-i18n="conditionUsed">Used</option>
+                    <option value="for-parts" data-i18n="conditionForParts">For parts</option>
+                  </select>
+                </div>
                 <div class="form-grid two">
                   <div class="input-wrap">
                     <label for="fullCost" data-i18n="fullCost">Purchase Price / Cost</label>
@@ -701,17 +714,21 @@
                 </div>
                 <div class="input-wrap">
                   <label for="fullImageInput" data-i18n="fullImage">Item Image</label>
-                  <input type="file" id="fullImageInput" accept="image/*" />
+                  <input type="file" id="fullImageInput" accept="image/*" multiple />
                   <div class="field-hint" data-i18n="fieldImageHint">Stores a compressed local image so the app still works offline.</div>
                   <div class="image-preview-frame hidden" id="fullImagePreviewWrap">
                     <img id="fullImagePreview" alt="Item preview" />
                   </div>
+                  <div class="image-gallery-editor" id="fullImageGallery" aria-live="polite"></div>
                 </div>
                 <div class="input-wrap">
                   <label for="fullSaleStatus" data-i18n="fullSaleStatus">Sale Status</label>
                   <select id="fullSaleStatus">
+                    <option value="draft" data-i18n="statusDraft">Draft</option>
+                    <option value="listed" data-i18n="statusListed">Listed</option>
                     <option value="available" data-i18n="statusAvailable">Available</option>
                     <option value="sold" data-i18n="statusSold">Sold</option>
+                    <option value="archived" data-i18n="statusArchived">Archived</option>
                   </select>
                 </div>
                 <div id="fullSoldFields" class="form-grid hidden">
@@ -765,6 +782,7 @@
                 <div class="detail-image-frame hidden" id="detailImageWrap">
                   <img id="detailImage" alt="Item image" />
                 </div>
+                <div class="detail-gallery" id="detailGallery" aria-label="Item image gallery"></div>
               </div>
               <div class="detail-copy">
                 <div class="detail-item-name" id="detailName">Item name</div>

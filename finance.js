@@ -42,7 +42,10 @@
           profit: sale.soldPrice == null ? 0 : (sale.soldPrice - item.cost) * sale.quantity,
           dateSold: sale.dateSold,
           note: sale.note || "",
-          originalBarcode: item.originalBarcode || ""
+          originalBarcode: item.originalBarcode || "",
+          itemImage: inventory.getMainImage(item),
+          mainImage: inventory.getMainImage(item),
+          images: inventory.normalizeImages(item)
         });
       });
     });

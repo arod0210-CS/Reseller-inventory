@@ -34,7 +34,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  let itemSheetImageData = "";
+  let itemSheetImageData = [];
+  let itemSheetMainImage = "";
   let scannerImageData = "";
   let itemSheetSnapshot = "";
   let transactionSnapshot = "";
@@ -145,6 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fullDescription: document.getElementById("fullDescription"),
     fullCategory: document.getElementById("fullCategory"),
     fullSource: document.getElementById("fullSource"),
+    fullCondition: document.getElementById("fullCondition"),
     fullCost: document.getElementById("fullCost"),
     fullListedPrice: document.getElementById("fullListedPrice"),
     fullQuantity: document.getElementById("fullQuantity"),
@@ -156,6 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fullImageInput: document.getElementById("fullImageInput"),
     fullImagePreviewWrap: document.getElementById("fullImagePreviewWrap"),
     fullImagePreview: document.getElementById("fullImagePreview"),
+    fullImageGallery: document.getElementById("fullImageGallery"),
     fullSaleStatus: document.getElementById("fullSaleStatus"),
     fullSoldFields: document.getElementById("fullSoldFields"),
     fullSoldPrice: document.getElementById("fullSoldPrice"),
@@ -171,6 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
     detailAvatar: document.getElementById("detailAvatar"),
     detailImageWrap: document.getElementById("detailImageWrap"),
     detailImage: document.getElementById("detailImage"),
+    detailGallery: document.getElementById("detailGallery"),
     detailName: document.getElementById("detailName"),
     detailMeta: document.getElementById("detailMeta"),
     detailStatusPill: document.getElementById("detailStatusPill"),
@@ -351,14 +355,57 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullSoldFields.classList.toggle("hidden", refs.fullSaleStatus.value !== "sold");
   }
 
-  function updateImagePreview(wrapper, image, dataUrl) {
+  function normalizeSheetImages(images) {
+    return (Array.isArray(images) ? images : [images]).map(function (entry) {
+      return inventory.trimString(entry);
+    }).filter(Boolean).filter(function (entry, index, list) {
+      return list.indexOf(entry) === index;
+    });
+  }
+
+  function getSheetMainImage() {
+    itemSheetImageData = normalizeSheetImages(itemSheetImageData);
+    if (itemSheetMainImage && itemSheetImageData.indexOf(itemSheetMainImage) >= 0) {
+      return itemSheetMainImage;
+    }
+    itemSheetMainImage = itemSheetImageData[0] || "";
+    return itemSheetMainImage;
+  }
+
+  function updateImagePreview(wrapper, image, dataUrl, altText) {
     if (dataUrl) {
       wrapper.classList.remove("hidden");
       image.src = dataUrl;
+      image.alt = altText || t("imagePreview");
     } else {
       wrapper.classList.add("hidden");
       image.removeAttribute("src");
     }
+  }
+
+  function buildImageHtml(item, className) {
+    const mainImage = inventory.getMainImage(item);
+    if (!mainImage) {
+      return "<div class=\"" + className + " image-placeholder\" aria-hidden=\"true\">" + escapeHtml(inventory.getInitials(item.name)) + "</div>";
+    }
+    return "<img class=\"" + className + "\" src=\"" + escapeHtml(mainImage) + "\" alt=\"" + escapeHtml(item.name + " product picture") + "\" loading=\"lazy\" />";
+  }
+
+  function renderSheetImageGallery() {
+    if (!refs.fullImageGallery) {
+      return;
+    }
+    itemSheetImageData = normalizeSheetImages(itemSheetImageData);
+    const mainImage = getSheetMainImage();
+    updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, mainImage, refs.fullName.value || t("imagePreview"));
+    refs.fullImageGallery.innerHTML = itemSheetImageData.length ? itemSheetImageData.map(function (imageUrl, index) {
+      return [
+        "<button class=\"image-thumb" + (imageUrl === mainImage ? " active" : "") + "\" type=\"button\" data-image-index=\"" + index + "\" aria-label=\"Make image " + (index + 1) + " main picture\">",
+        "<img src=\"" + escapeHtml(imageUrl) + "\" alt=\"" + escapeHtml((refs.fullName.value || "Item") + " preview " + (index + 1)) + "\" />",
+        "<span>" + (imageUrl === mainImage ? "Main" : "Set main") + "</span>",
+        "</button>"
+      ].join("");
+    }).join("") : "<div class=\"field-hint\">" + escapeHtml(t("noImage")) + "</div>";
   }
 
   function resetQuickForm() {
@@ -377,6 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullDescription.value = "";
     refs.fullCategory.value = "electronics";
     refs.fullSource.value = "";
+    refs.fullCondition.value = "used";
     refs.fullCost.value = "";
     refs.fullListedPrice.value = "";
     refs.fullQuantity.value = "1";
@@ -384,13 +432,14 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullStorage.value = "";
     refs.fullCustomLocation.value = "";
     refs.fullBarcode.value = "";
-    refs.fullSaleStatus.value = "available";
+    refs.fullSaleStatus.value = "listed";
     refs.fullSoldPrice.value = "";
     refs.fullDateSold.value = i18n.formatDateInput(new Date().toISOString());
     refs.fullSoldPlatform.value = "";
     refs.fullNotes.value = "";
-    itemSheetImageData = "";
-    updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, itemSheetImageData);
+    itemSheetImageData = [];
+    itemSheetMainImage = "";
+    renderSheetImageGallery();
     toggleFullCustomLocation();
     toggleSoldFields();
   }
@@ -400,6 +449,7 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullDescription.value = item.description;
     refs.fullCategory.value = item.category;
     refs.fullSource.value = item.source || "";
+    refs.fullCondition.value = item.condition || "used";
     refs.fullCost.value = item.cost;
     refs.fullListedPrice.value = item.listedPrice == null ? "" : item.listedPrice;
     refs.fullQuantity.value = item.saleStatus === "sold" ? Math.max(item.soldQuantity, 1) : item.quantity;
@@ -412,8 +462,9 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullDateSold.value = item.dateSold ? i18n.formatDateInput(item.dateSold) : i18n.formatDateInput(new Date().toISOString());
     refs.fullSoldPlatform.value = item.soldPlatform || "";
     refs.fullNotes.value = item.notes || "";
-    itemSheetImageData = item.itemImage || "";
-    updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, itemSheetImageData);
+    itemSheetImageData = inventory.normalizeImages(item);
+    itemSheetMainImage = inventory.getMainImage(item);
+    renderSheetImageGallery();
     toggleFullCustomLocation();
     toggleSoldFields();
   }
@@ -423,7 +474,8 @@ document.addEventListener("DOMContentLoaded", function () {
       context: state.itemSheetContext,
       mode: state.sheetMode,
       editingItemId: state.editingItemId,
-      image: itemSheetImageData,
+      images: itemSheetImageData,
+      mainImage: itemSheetMainImage,
       quickName: refs.quickName.value,
       quickCategory: refs.quickCategory.value,
       quickQuantity: refs.quickQuantity.value,
@@ -435,6 +487,7 @@ document.addEventListener("DOMContentLoaded", function () {
       fullDescription: refs.fullDescription.value,
       fullCategory: refs.fullCategory.value,
       fullSource: refs.fullSource.value,
+      fullCondition: refs.fullCondition.value,
       fullCost: refs.fullCost.value,
       fullListedPrice: refs.fullListedPrice.value,
       fullQuantity: refs.fullQuantity.value,
@@ -713,7 +766,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function buildItemCard(item) {
     return [
       "<button class=\"item-card action-open-item\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\">",
-      "<div class=\"avatar " + escapeHtml(inventory.getAvatarClass(item.category)) + "\">" + escapeHtml(inventory.getInitials(item.name)) + "</div>",
+      buildImageHtml(item, "avatar item-photo"),
       "<div class=\"item-copy\">",
       "<div class=\"item-name\">" + escapeHtml(item.name) + "</div>",
       "<div class=\"item-meta\">" + escapeHtml(inventory.getCategoryLabel(item.category, t)) + " · " + escapeHtml(item.itemId) + "</div>",
@@ -746,10 +799,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function buildInventoryCard(item) {
     const latestSale = inventory.getLatestSale(item);
+    const canSell = (item.saleStatus === "available" || item.saleStatus === "listed") && item.quantity > 0;
+    const transactionAction = item.saleStatus === "sold" ? "restock" : "sell";
+    const transactionLabel = item.saleStatus === "sold" ? t("restock") : t("markSold");
     return [
       "<div class=\"inventory-card\">",
       "<button class=\"inventory-card-main action-open-item\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\">",
-      "<div class=\"avatar " + escapeHtml(inventory.getAvatarClass(item.category)) + "\">" + escapeHtml(inventory.getInitials(item.name)) + "</div>",
+      buildImageHtml(item, "avatar item-photo"),
       "<div class=\"item-copy\">",
       "<div class=\"item-name\">" + escapeHtml(item.name) + "</div>",
       "<div class=\"item-meta\">" + escapeHtml(inventory.getCategoryLabel(item.category, t)) + " · " + escapeHtml(item.itemId) + "</div>",
@@ -769,7 +825,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "</div>",
       "<div class=\"inventory-card-actions\">",
       "<button class=\"inventory-action-btn secondary action-edit-item\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\">" + escapeHtml(t("editItem")) + "</button>",
-      "<button class=\"inventory-action-btn action-sell-restock\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\" data-action=\"" + escapeHtml(item.saleStatus === "sold" ? "restock" : "sell") + "\">" + escapeHtml(item.saleStatus === "sold" ? t("restock") : t("markSold")) + "</button>",
+      "<button class=\"inventory-action-btn action-sell-restock\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\" data-action=\"" + escapeHtml(transactionAction) + "\"" + (!canSell && item.saleStatus !== "sold" ? " disabled" : "") + ">" + escapeHtml(transactionLabel) + "</button>",
       "<button class=\"inventory-action-btn secondary action-open-label\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\">" + escapeHtml(t("detailLabel")) + "</button>",
       "</div>",
       "</div>"
@@ -779,7 +835,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function buildSaleCard(entry) {
     return [
       "<button class=\"item-card action-open-item\" type=\"button\" data-item-id=\"" + escapeHtml(entry.itemRef) + "\">",
-      "<div class=\"avatar " + escapeHtml(inventory.getAvatarClass(entry.category)) + "\">" + escapeHtml(inventory.getInitials(entry.name)) + "</div>",
+      buildImageHtml(entry, "avatar item-photo"),
       "<div class=\"item-copy\">",
       "<div class=\"item-name\">" + escapeHtml(entry.name) + "</div>",
       "<div class=\"item-meta\">" + escapeHtml(inventory.getPlatformLabel(entry.soldPlatform, t)) + " · " + escapeHtml(i18n.formatDateTime(entry.dateSold)) + "</div>",
@@ -974,11 +1030,15 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.detailAgePill.textContent = age.text;
     refs.detailAvatar.className = "detail-avatar " + inventory.getAvatarClass(item.category);
     refs.detailAvatar.textContent = inventory.getInitials(item.name);
-    updateImagePreview(refs.detailImageWrap, refs.detailImage, item.itemImage);
+    updateImagePreview(refs.detailImageWrap, refs.detailImage, inventory.getMainImage(item), item.name + " product picture");
+    refs.detailGallery.innerHTML = inventory.normalizeImages(item).length > 1 ? inventory.normalizeImages(item).map(function (imageUrl, index) {
+      return "<button class=\"detail-thumb\" type=\"button\" data-detail-image-index=\"" + index + "\" aria-label=\"View image " + (index + 1) + "\"><img src=\"" + escapeHtml(imageUrl) + "\" alt=\"" + escapeHtml(item.name + " gallery image " + (index + 1)) + "\" /></button>";
+    }).join("") : "";
 
     const detailFields = [
       { label: t("detailDescription"), value: item.description || "--", wide: true },
       { label: t("detailCategory"), value: inventory.getCategoryLabel(item.category, t) },
+      { label: t("fullCondition"), value: t("condition" + (item.condition || "used").split("-").map(function (part) { return part.charAt(0).toUpperCase() + part.slice(1); }).join("")) || item.condition },
       { label: t("detailCost"), value: currency(item.cost) },
       { label: t("detailListedPrice"), value: item.listedPrice == null ? "--" : currency(item.listedPrice) },
       { label: t("detailSoldPrice"), value: soldPrice },
@@ -1015,7 +1075,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     refs.detailHistoryList.innerHTML = historyEntries.length ? historyEntries.join("") : "<div class=\"empty-state\">" + escapeHtml(t("noHistory")) + "</div>";
-    refs.detailSellBtn.disabled = item.saleStatus !== "available" || item.quantity < 1;
+    refs.detailSellBtn.disabled = !(item.saleStatus === "available" || item.saleStatus === "listed") || item.quantity < 1;
   }
 
   function renderLabelPreview() {
@@ -1114,6 +1174,8 @@ document.addEventListener("DOMContentLoaded", function () {
       customLocation: refs.quickCustomLocation.value,
       originalBarcode: "",
       itemImage: "",
+      mainImage: "",
+      images: [],
       saleStatus: "available",
       soldPrice: null,
       dateSold: null,
@@ -1152,6 +1214,7 @@ document.addEventListener("DOMContentLoaded", function () {
       description: inventory.trimString(refs.fullDescription.value),
       category: refs.fullCategory.value,
       source: inventory.trimString(refs.fullSource.value),
+      condition: refs.fullCondition.value,
       cost: cost,
       listedPrice: listedPrice,
       quantity: refs.fullQuantity.value || 1,
@@ -1159,7 +1222,9 @@ document.addEventListener("DOMContentLoaded", function () {
       storageLocation: refs.fullStorage.value,
       customLocation: refs.fullCustomLocation.value,
       originalBarcode: inventory.trimString(refs.fullBarcode.value),
-      itemImage: itemSheetImageData,
+      itemImage: getSheetMainImage(),
+      mainImage: getSheetMainImage(),
+      images: itemSheetImageData,
       saleStatus: refs.fullSaleStatus.value,
       soldPrice: null,
       dateSold: null,
@@ -1427,8 +1492,9 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.fullCategory.value = refs.scannerCategory.value || "other";
     refs.fullListedPrice.value = refs.scannerPrice.value;
     refs.fullBarcode.value = refs.scannerBarcodeInput.value;
-    itemSheetImageData = scannerImageData;
-    updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, itemSheetImageData);
+    itemSheetImageData = normalizeSheetImages(scannerImageData ? [scannerImageData] : []);
+    itemSheetMainImage = itemSheetImageData[0] || "";
+    renderSheetImageGallery();
     closeScanner();
     captureItemSheetSnapshot();
     if (scannerToastMessage) {
@@ -1545,6 +1611,18 @@ document.addEventListener("DOMContentLoaded", function () {
   refs.saveQuickBtn.addEventListener("click", saveQuickItem);
   refs.saveFullBtn.addEventListener("click", saveFullItem);
   refs.fullImageInput.addEventListener("change", handleFullImageChange);
+  refs.fullImageGallery.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-image-index]");
+    if (!button) {
+      return;
+    }
+    const index = Number(button.getAttribute("data-image-index"));
+    if (itemSheetImageData[index]) {
+      itemSheetMainImage = itemSheetImageData[index];
+      renderSheetImageGallery();
+      captureItemSheetSnapshot();
+    }
+  });
 
   refs.homeSearchInput.addEventListener("input", function () {
     state.homeSearch = refs.homeSearchInput.value;
@@ -1605,6 +1683,18 @@ document.addEventListener("DOMContentLoaded", function () {
   refs.detailDeleteBtn.addEventListener("click", function () {
     if (state.detailItemId) {
       deleteItem(state.detailItemId);
+    }
+  });
+  refs.detailGallery.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-detail-image-index]");
+    const item = getItemById(state.detailItemId);
+    if (!button || !item) {
+      return;
+    }
+    const images = inventory.normalizeImages(item);
+    const selected = images[Number(button.getAttribute("data-detail-image-index"))];
+    if (selected) {
+      updateImagePreview(refs.detailImageWrap, refs.detailImage, selected, item.name + " product picture");
     }
   });
 

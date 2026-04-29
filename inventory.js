@@ -30,7 +30,7 @@
   const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
   const STORAGE_OPTIONS = Object.keys(STORAGE_META);
   const PLATFORM_OPTIONS = Object.keys(PLATFORM_META);
-  const SALE_STATUS_OPTIONS = ["available", "sold"];
+  const SALE_STATUS_OPTIONS = ["draft", "listed", "available", "sold", "archived"];
 
   function uid(prefix) {
     return [prefix || "pf", Date.now(), Math.floor(Math.random() * 100000)].join("-");
@@ -85,7 +85,33 @@
   }
 
   function normalizeSaleStatus(value) {
-    return normalizeEnum(trimString(value).toLowerCase(), SALE_STATUS_OPTIONS, "available");
+    const cleaned = trimString(value).toLowerCase();
+    if (cleaned === "active") {
+      return "listed";
+    }
+    return normalizeEnum(cleaned, SALE_STATUS_OPTIONS, "listed");
+  }
+
+  function normalizeImages(rawItem) {
+    const source = Array.isArray(rawItem.images) ? rawItem.images : Array.isArray(rawItem.itemImages) ? rawItem.itemImages : [];
+    const images = source.concat([rawItem.itemImage, rawItem.image]).map(function (entry) {
+      return trimString(entry);
+    }).filter(Boolean).filter(function (entry, index, list) {
+      return list.indexOf(entry) === index;
+    });
+    return images;
+  }
+
+  function getMainImage(item) {
+    if (!item) {
+      return "";
+    }
+    const images = Array.isArray(item.images) ? item.images : normalizeImages(item);
+    const preferred = trimString(item.mainImage || item.itemImage);
+    if (preferred && images.indexOf(preferred) >= 0) {
+      return preferred;
+    }
+    return images[0] || preferred || "";
   }
 
   function toIsoDateTime(value, fallback) {
@@ -304,6 +330,7 @@
       return sum + sale.quantity;
     }, 0);
     const statusSeed = normalizeSaleStatus(rawItem.saleStatus || rawItem.status);
+    const images = normalizeImages(rawItem);
     const inferredSold = statusSeed === "sold" || (baseQuantity === 0 && soldQuantity > 0);
     let quantity = inferredSold ? 0 : baseQuantity;
 
@@ -325,11 +352,12 @@
       itemId: itemId,
       name: trimString(rawItem.name) || "Untitled Item",
       description: trimString(rawItem.description),
+      condition: trimString(rawItem.condition) || "used",
       category: category,
       cost: cost,
       listedPrice: toMoney(rawItem.listedPrice != null ? rawItem.listedPrice : rawItem.onlinePrice != null ? rawItem.onlinePrice : rawItem.price),
       soldPrice: latestSale && latestSale.soldPrice != null ? latestSale.soldPrice : toMoney(rawItem.soldPrice),
-      saleStatus: quantity > 0 ? "available" : (inferredSold || soldQuantity > 0 ? "sold" : "available"),
+      saleStatus: inferredSold || soldQuantity > 0 ? "sold" : statusSeed,
       dateAdded: dateAdded,
       dateSold: latestSale ? latestSale.dateSold : (rawItem.dateSold || rawItem.soldAt ? toIsoDateTime(rawItem.dateSold || rawItem.soldAt, dateAdded) : null),
       storageLocation: storageInfo.storageLocation,
@@ -337,7 +365,9 @@
       soldPlatform: latestSale ? latestSale.soldPlatform : normalizePlatform(rawItem.soldPlatform || rawItem.salePlatform),
       originalBarcode: trimString(rawItem.originalBarcode || rawItem.barcode),
       internalBarcode: trimString(rawItem.internalBarcode) || itemId,
-      itemImage: trimString(rawItem.itemImage || rawItem.image),
+      itemImage: trimString(rawItem.mainImage || rawItem.itemImage || rawItem.image || images[0]),
+      mainImage: trimString(rawItem.mainImage || rawItem.itemImage || rawItem.image || images[0]),
+      images: images,
       notes: trimString(rawItem.notes),
       source: trimString(rawItem.source || rawItem.pallet),
       quantity: quantity,
@@ -395,9 +425,9 @@
   function createItem(payload, existingItems) {
     const nowIso = new Date().toISOString();
     const dateAdded = toIsoDateTime(payload.dateAdded, nowIso);
-    const status = normalizeSaleStatus(payload.saleStatus || "available");
+    const status = normalizeSaleStatus(payload.saleStatus || "listed");
     const selectedQuantity = toQuantity(payload.quantity, 1);
-    const availableQuantity = status === "sold" ? 0 : Math.max(1, selectedQuantity || 1);
+    const availableQuantity = status === "sold" || status === "archived" ? 0 : Math.max(1, selectedQuantity || 1);
     const soldQuantity = status === "sold" ? Math.max(1, selectedQuantity || 1) : 0;
     const soldPrice = toMoney(payload.soldPrice);
     const soldDate = status === "sold" ? toIsoDateTime(payload.dateSold, nowIso) : null;
@@ -408,6 +438,7 @@
       itemId: itemId,
       name: trimString(payload.name),
       description: trimString(payload.description),
+      condition: trimString(payload.condition) || "used",
       category: normalizeCategory(payload.category),
       cost: Math.max(0, toMoney(payload.cost) == null ? 0 : toMoney(payload.cost)),
       listedPrice: toMoney(payload.listedPrice),
@@ -420,7 +451,9 @@
       soldPlatform: soldPlatform,
       originalBarcode: trimString(payload.originalBarcode),
       internalBarcode: itemId,
-      itemImage: trimString(payload.itemImage),
+      itemImage: getMainImage(payload),
+      mainImage: getMainImage(payload),
+      images: normalizeImages(payload),
       notes: trimString(payload.notes),
       source: trimString(payload.source),
       quantity: availableQuantity,
@@ -468,6 +501,7 @@
     const map = [
       ["name", "name"],
       ["description", "description"],
+      ["condition", "condition"],
       ["category", "category"],
       ["cost", "cost"],
       ["listedPrice", "listedPrice"],
@@ -502,6 +536,7 @@
       internalBarcode: existingItem.internalBarcode || existingItem.itemId,
       name: trimString(payload.name),
       description: trimString(payload.description),
+      condition: trimString(payload.condition) || "used",
       category: normalizeCategory(payload.category),
       cost: Math.max(0, toMoney(payload.cost) == null ? 0 : toMoney(payload.cost)),
       listedPrice: toMoney(payload.listedPrice),
@@ -510,7 +545,9 @@
       storageLocation: normalizeStorageLocation(payload.storageLocation),
       customLocation: trimString(payload.customLocation),
       originalBarcode: trimString(payload.originalBarcode),
-      itemImage: trimString(payload.itemImage),
+      itemImage: getMainImage(payload),
+      mainImage: getMainImage(payload),
+      images: normalizeImages(payload),
       notes: trimString(payload.notes),
       source: trimString(payload.source),
       lastUpdated: nowIso,
@@ -522,7 +559,7 @@
       dateSold: existingItem.dateSold
     };
 
-    if (status === "sold" && existingItem.saleStatus === "available") {
+    if (status === "sold" && existingItem.saleStatus !== "sold") {
       const soldQty = Math.max(1, quantity || existingItem.quantity || 1);
       const soldPrice = toMoney(payload.soldPrice);
       const soldDate = toIsoDateTime(payload.dateSold, nowIso);
@@ -551,11 +588,11 @@
         soldPlatform: soldPlatform
       }));
     } else {
-      if (status === "available") {
+      if (status === "available" || status === "listed" || status === "draft") {
         quantity = Math.max(1, quantity || 1);
       }
 
-      base.quantity = status === "sold" ? 0 : quantity;
+      base.quantity = status === "sold" || status === "archived" ? 0 : quantity;
 
       if (existingItem.saleStatus === "sold" && status === "sold" && base.salesHistory.length) {
         const updatedSale = buildSaleHistoryEntry({
@@ -627,6 +664,7 @@
       internalBarcode: existingItem.internalBarcode || existingItem.itemId,
       name: existingItem.name,
       description: existingItem.description,
+      condition: existingItem.condition,
       category: existingItem.category,
       cost: existingItem.cost,
       listedPrice: existingItem.listedPrice,
@@ -638,7 +676,9 @@
       customLocation: existingItem.customLocation,
       soldPlatform: soldPlatform,
       originalBarcode: existingItem.originalBarcode,
-      itemImage: existingItem.itemImage,
+      itemImage: getMainImage(existingItem),
+      mainImage: getMainImage(existingItem),
+      images: normalizeImages(existingItem),
       notes: existingItem.notes,
       source: existingItem.source,
       quantity: nextQuantity,
@@ -681,6 +721,7 @@
       internalBarcode: existingItem.internalBarcode || existingItem.itemId,
       name: existingItem.name,
       description: existingItem.description,
+      condition: existingItem.condition,
       category: existingItem.category,
       cost: existingItem.cost,
       listedPrice: existingItem.listedPrice,
@@ -692,7 +733,9 @@
       customLocation: existingItem.customLocation,
       soldPlatform: existingItem.soldPlatform,
       originalBarcode: existingItem.originalBarcode,
-      itemImage: existingItem.itemImage,
+      itemImage: getMainImage(existingItem),
+      mainImage: getMainImage(existingItem),
+      images: normalizeImages(existingItem),
       notes: existingItem.notes,
       source: existingItem.source,
       quantity: nextQuantity,
@@ -737,7 +780,15 @@
   }
 
   function getSaleStatusLabel(status, t) {
-    return t ? t(status === "sold" ? "statusSold" : "statusAvailable") : status;
+    const normalized = normalizeSaleStatus(status);
+    const keyMap = {
+      draft: "statusDraft",
+      listed: "statusListed",
+      available: "statusAvailable",
+      sold: "statusSold",
+      archived: "statusArchived"
+    };
+    return t ? t(keyMap[normalized] || "statusListed") : normalized;
   }
 
   function getAvatarClass(category) {
@@ -807,15 +858,22 @@
       item.source,
       item.customLocation,
       item.storageLocation,
-      item.soldPlatform
+      item.soldPlatform,
+      item.saleStatus,
+      item.category,
+      item.condition
     ].join(" ").toLowerCase();
   }
 
   function matchesSearch(item, query) {
-    if (!trimString(query)) {
+    const cleaned = trimString(query).toLowerCase();
+    if (!cleaned) {
       return true;
     }
-    return buildSearchableText(item).indexOf(trimString(query).toLowerCase()) >= 0;
+    const searchable = buildSearchableText(item);
+    return cleaned.split(/\s+/).every(function (token) {
+      return searchable.indexOf(token) >= 0;
+    });
   }
 
   function matchesFilters(item, filters, nowDate) {
@@ -877,6 +935,9 @@
       if (sortKey === "quantity-low") {
         return left.quantity - right.quantity;
       }
+      if (sortKey === "status") {
+        return left.saleStatus.localeCompare(right.saleStatus) || left.name.localeCompare(right.name);
+      }
       return new Date(right.dateAdded) - new Date(left.dateAdded);
     });
     return sorted;
@@ -890,7 +951,7 @@
 
   function getAvailableItems(items) {
     return (Array.isArray(items) ? items : []).filter(function (item) {
-      return item.saleStatus === "available";
+      return item.saleStatus === "available" || item.saleStatus === "listed";
     });
   }
 
@@ -926,6 +987,8 @@
     updateItem: updateItem,
     recordSale: recordSale,
     recordRestock: recordRestock,
+    getMainImage: getMainImage,
+    normalizeImages: normalizeImages,
     getCategoryLabel: getCategoryLabel,
     getStorageLabel: getStorageLabel,
     getPlatformLabel: getPlatformLabel,
