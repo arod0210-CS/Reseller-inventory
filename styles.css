@@ -2044,3 +2044,137 @@ body {
     height: 84px;
   }
 }
+
+/* Verified live mobile fixes */
+.login-screen {
+  color: #fff;
+  overflow-x: hidden;
+}
+
+.login-title,
+.login-subtitle,
+.login-actions,
+.login-footer {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.login-title {
+  color: #071327;
+}
+
+.field {
+  width: 100%;
+  max-width: 100%;
+}
+
+.login-actions {
+  gap: 16px;
+}
+
+.login-actions span:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bottom-nav {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  height: calc(92px + var(--safe-bottom));
+}
+
+.main-content {
+  overflow: hidden;
+}
+
+@media (max-width: 520px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .login-screen {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .login-actions {
+    font-size: 0.86rem;
+  }
+}
+
+/* Second-pass mobile overflow correction */
+.login-screen {
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
+}
+
+.login-screen .field,
+.login-screen .btn,
+.login-actions,
+.login-footer,
+.login-subtitle,
+.login-title {
+  width: auto;
+  max-width: 100%;
+}
+
+.login-actions {
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.login-actions span {
+  min-width: 0;
+  max-width: 48%;
+}
+
+.login-actions span:last-child {
+  white-space: normal;
+}
+
+.login-screen input {
+  min-width: 0;
+}
+
+/* Hard clamp login contents to phone viewport */
+@media (max-width: 520px) {
+  .login-screen .field,
+  .login-screen .btn {
+    flex: 0 0 auto;
+    width: calc(100vw - 44px);
+    max-width: calc(100vw - 44px);
+    align-self: center;
+  }
+
+  .login-actions {
+    width: calc(100vw - 44px);
+    max-width: calc(100vw - 44px);
+    align-self: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 12px;
+  }
+
+  .login-actions span {
+    max-width: none;
+  }
+
+  .login-actions span:last-child {
+    justify-self: end;
+    text-align: right;
+  }
+}
