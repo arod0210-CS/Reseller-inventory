@@ -89,6 +89,12 @@ document.addEventListener("DOMContentLoaded", function () {
     financeSoldItems: document.getElementById("financeSoldItems"),
     financeAverageSale: document.getElementById("financeAverageSale"),
     financeAverageProfit: document.getElementById("financeAverageProfit"),
+    financeInventoryCost: document.getElementById("financeInventoryCost"),
+    financeListedValue: document.getElementById("financeListedValue"),
+    financeEstimatedProfit: document.getElementById("financeEstimatedProfit"),
+    financeProfitMargin: document.getElementById("financeProfitMargin"),
+    financeStatusBreakdown: document.getElementById("financeStatusBreakdown"),
+    financeSlowMoving: document.getElementById("financeSlowMoving"),
     financeBestPlatform: document.getElementById("financeBestPlatform"),
     financeBestCategory: document.getElementById("financeBestCategory"),
     financeMissingPrice: document.getElementById("financeMissingPrice"),
@@ -956,16 +962,51 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderFinance() {
-    const metrics = finance.getFinanceMetrics(items, state.financeRange, new Date());
+    const now = new Date();
+    const metrics = finance.getFinanceMetrics(items, state.financeRange, now);
+    const overview = finance.getOverviewMetrics(items, now);
+    const statusCounts = items.reduce(function (counts, item) {
+      counts[item.saleStatus] = (counts[item.saleStatus] || 0) + 1;
+      return counts;
+    }, {});
+    const slowMovingItems = inventory.getAvailableItems(items).filter(function (item) {
+      return item.quantity <= 1 || inventory.getAgeInDays(item, now) >= 60;
+    }).sort(function (left, right) {
+      return inventory.getAgeInDays(right, now) - inventory.getAgeInDays(left, now);
+    }).slice(0, 4);
+    const portfolioMargin = overview.totalRevenue > 0 ? overview.totalProfit / overview.totalRevenue : (overview.unsoldInventoryValue > 0 ? overview.inventoryPotentialProfit / overview.unsoldInventoryValue : null);
+
     refs.financeRevenue.textContent = currency(metrics.revenue);
     refs.financeCost.textContent = currency(metrics.cost);
     refs.financeProfit.textContent = currency(metrics.profit);
     refs.financeSoldItems.textContent = number(metrics.soldItems);
     refs.financeAverageSale.textContent = currency(metrics.averageSalePrice);
     refs.financeAverageProfit.textContent = currency(metrics.averageProfit);
+    refs.financeInventoryCost.textContent = currency(overview.inventoryCost);
+    refs.financeListedValue.textContent = currency(overview.unsoldInventoryValue);
+    refs.financeEstimatedProfit.textContent = currency(overview.inventoryPotentialProfit);
+    refs.financeProfitMargin.textContent = percent(portfolioMargin);
     refs.financeBestPlatform.textContent = metrics.bestPlatform ? inventory.getPlatformLabel(metrics.bestPlatform.key, t) : "--";
     refs.financeBestCategory.textContent = metrics.bestCategory ? inventory.getCategoryLabel(metrics.bestCategory.key, t) : "--";
     refs.financeMissingPrice.textContent = number(metrics.missingSoldPriceCount);
+
+    refs.financeStatusBreakdown.innerHTML = ["draft", "listed", "available", "sold", "archived"].map(function (statusKey) {
+      return [
+        "<div class=\"insight-pill\">",
+        "<span>" + escapeHtml(inventory.getSaleStatusLabel(statusKey, t)) + "</span>",
+        "<strong>" + escapeHtml(number(statusCounts[statusKey] || 0)) + "</strong>",
+        "</div>"
+      ].join("");
+    }).join("");
+
+    refs.financeSlowMoving.innerHTML = slowMovingItems.length ? slowMovingItems.map(function (item) {
+      return [
+        "<button class=\"slow-item action-open-item\" type=\"button\" data-item-id=\"" + escapeHtml(item.id) + "\">",
+        buildImageHtml(item, "slow-item-image"),
+        "<span><strong>" + escapeHtml(item.name) + "</strong><small>" + escapeHtml(number(item.quantity)) + " left · " + escapeHtml(buildAgeLabelText(item)) + "</small></span>",
+        "</button>"
+      ].join("");
+    }).join("") : "<div class=\"empty-state compact-empty\">" + escapeHtml(t("noSlowMoving")) + "</div>";
 
     Array.from(refs.financeRangeRow.querySelectorAll(".chip")).forEach(function (button) {
       button.classList.toggle("active", button.getAttribute("data-range") === state.financeRange);
@@ -1653,6 +1694,7 @@ document.addEventListener("DOMContentLoaded", function () {
   refs.homeAttentionList.addEventListener("click", handleItemActionClick);
   refs.inventoryList.addEventListener("click", handleItemActionClick);
   refs.financeSalesList.addEventListener("click", handleItemActionClick);
+  refs.financeSlowMoving.addEventListener("click", handleItemActionClick);
   refs.alertsList.addEventListener("click", handleItemActionClick);
 
   refs.closeDetailBtn.addEventListener("click", closeDetail);

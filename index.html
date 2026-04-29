@@ -189,12 +189,84 @@
             </div>
           </section>
 
-          <section class="tab-screen" id="analyticsView" data-tab-view="analytics">
+          <section class="tab-screen" id="financeView" data-tab-view="finance">
             <div class="sticky-page-head">
-              <div class="page-hero analytics-hero">
-                <div class="page-kicker" data-i18n="analyticsKicker">Chart view</div>
-                <h2 data-i18n="analyticsTitle">Analytics</h2>
-                <p data-i18n="analyticsSubtitle">Break down platform performance, category mix, and earnings.</p>
+              <div class="page-hero finance-hero">
+                <div class="page-kicker" data-i18n="financeKicker">Money flow</div>
+                <h2 data-i18n="financeTitle">Finance</h2>
+                <p data-i18n="financeSubtitle">Review revenue, cost, and profit across time ranges.</p>
+              </div>
+              <div class="chip-row range-row" id="financeRangeRow">
+                <button class="chip active" data-range="today" type="button" data-i18n="rangeToday">Today</button>
+                <button class="chip" data-range="week" type="button" data-i18n="rangeWeek">This Week</button>
+                <button class="chip" data-range="month" type="button" data-i18n="rangeMonth">This Month</button>
+                <button class="chip" data-range="year" type="button" data-i18n="rangeYear">This Year</button>
+                <button class="chip" data-range="all" type="button" data-i18n="rangeAll">All Time</button>
+              </div>
+            </div>
+
+            <div class="finance-grid">
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricRevenue">Revenue</div>
+                <div class="finance-card-value" id="financeRevenue">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricCost">Cost</div>
+                <div class="finance-card-value" id="financeCost">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricProfit">Profit</div>
+                <div class="finance-card-value" id="financeProfit">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricSoldItems">Sold Items</div>
+                <div class="finance-card-value" id="financeSoldItems">0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricAverageSale">Average Sale Price</div>
+                <div class="finance-card-value" id="financeAverageSale">$0</div>
+              </div>
+              <div class="finance-card">
+                <div class="finance-card-label" data-i18n="metricAverageProfit">Average Profit</div>
+                <div class="finance-card-value" id="financeAverageProfit">$0</div>
+              </div>
+            </div>
+
+            <div class="finance-grid portfolio-grid">
+              <div class="finance-card accent-blue">
+                <div class="finance-card-label" data-i18n="totalInventoryCost">Total Inventory Cost</div>
+                <div class="finance-card-value" id="financeInventoryCost">$0</div>
+              </div>
+              <div class="finance-card accent-indigo">
+                <div class="finance-card-label" data-i18n="totalListedValue">Total Listed Value</div>
+                <div class="finance-card-value" id="financeListedValue">$0</div>
+              </div>
+              <div class="finance-card accent-green">
+                <div class="finance-card-label" data-i18n="estimatedProfit">Estimated Profit</div>
+                <div class="finance-card-value" id="financeEstimatedProfit">$0</div>
+              </div>
+              <div class="finance-card accent-teal">
+                <div class="finance-card-label" data-i18n="profitMargin">Profit Margin</div>
+                <div class="finance-card-value" id="financeProfitMargin">0%</div>
+              </div>
+            </div>
+
+            <div class="section-card status-insights-card">
+              <div class="section-header">
+                <div class="section-title" data-i18n="inventoryInsights">Inventory Insights</div>
+                <div class="section-caption" data-i18n="inventoryInsightsCaption">Status mix and items that may need attention.</div>
+              </div>
+              <div class="insight-grid" id="financeStatusBreakdown"></div>
+              <div class="slow-list" id="financeSlowMoving"></div>
+            </div>
+
+            <div class="section-card finance-analytics-heading">
+              <div class="section-header">
+                <div>
+                  <div class="page-kicker" data-i18n="analyticsKicker">Chart view</div>
+                  <div class="section-title" data-i18n="analyticsTitle">Analytics</div>
+                  <div class="section-caption" data-i18n="analyticsSubtitle">Break down platform performance, category mix, and earnings.</div>
+                </div>
               </div>
             </div>
 
@@ -260,50 +332,7 @@
                 </div>
               </div>
             </div>
-          </section>
 
-          <section class="tab-screen" id="financeView" data-tab-view="finance">
-            <div class="sticky-page-head">
-              <div class="page-hero finance-hero">
-                <div class="page-kicker" data-i18n="financeKicker">Money flow</div>
-                <h2 data-i18n="financeTitle">Finance</h2>
-                <p data-i18n="financeSubtitle">Review revenue, cost, and profit across time ranges.</p>
-              </div>
-              <div class="chip-row range-row" id="financeRangeRow">
-                <button class="chip active" data-range="today" type="button" data-i18n="rangeToday">Today</button>
-                <button class="chip" data-range="week" type="button" data-i18n="rangeWeek">This Week</button>
-                <button class="chip" data-range="month" type="button" data-i18n="rangeMonth">This Month</button>
-                <button class="chip" data-range="year" type="button" data-i18n="rangeYear">This Year</button>
-                <button class="chip" data-range="all" type="button" data-i18n="rangeAll">All Time</button>
-              </div>
-            </div>
-
-            <div class="finance-grid">
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricRevenue">Revenue</div>
-                <div class="finance-card-value" id="financeRevenue">$0</div>
-              </div>
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricCost">Cost</div>
-                <div class="finance-card-value" id="financeCost">$0</div>
-              </div>
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricProfit">Profit</div>
-                <div class="finance-card-value" id="financeProfit">$0</div>
-              </div>
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricSoldItems">Sold Items</div>
-                <div class="finance-card-value" id="financeSoldItems">0</div>
-              </div>
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricAverageSale">Average Sale Price</div>
-                <div class="finance-card-value" id="financeAverageSale">$0</div>
-              </div>
-              <div class="finance-card">
-                <div class="finance-card-label" data-i18n="metricAverageProfit">Average Profit</div>
-                <div class="finance-card-value" id="financeAverageProfit">$0</div>
-              </div>
-            </div>
 
             <div class="section-card">
               <div class="section-header">
@@ -429,26 +458,22 @@
         <nav class="bottom-nav" aria-label="Primary">
           <button class="nav-item active" data-tab="home" type="button" aria-label="Go to home">
             <span class="nav-icon-wrap"><span class="nav-icon">&#127968;</span></span>
-            <span class="nav-label">Home</span>
+            <span class="nav-label">Dashboard</span>
           </button>
           <button class="nav-item" data-tab="inventory" type="button" aria-label="Go to inventory">
             <span class="nav-icon-wrap"><span class="nav-icon">&#128230;</span></span>
             <span class="nav-label">Inventory</span>
           </button>
-          <button class="nav-item" data-tab="analytics" type="button" aria-label="Go to analytics">
-            <span class="nav-icon-wrap"><span class="nav-icon">&#129534;</span></span>
-            <span class="nav-label">Analytics</span>
-          </button>
           <div class="fab-wrap">
-            <button class="fab" id="openSheetBtn" type="button" aria-label="Add item">+</button>
+            <button class="fab" id="openSheetBtn" type="button" aria-label="Add item"><span>+</span><small>Add</small></button>
           </div>
           <button class="nav-item" data-tab="finance" type="button" aria-label="Go to finance">
             <span class="nav-icon-wrap"><span class="nav-icon">&#128181;</span></span>
             <span class="nav-label">Finance</span>
           </button>
-          <button class="nav-item" data-tab="profile" type="button" aria-label="Go to profile">
+          <button class="nav-item" data-tab="profile" type="button" aria-label="Go to settings">
             <span class="nav-icon-wrap"><span class="nav-icon">&#128100;</span></span>
-            <span class="nav-label">Profile</span>
+            <span class="nav-label">Settings</span>
           </button>
         </nav>
 

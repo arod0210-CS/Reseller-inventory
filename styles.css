@@ -1722,3 +1722,325 @@ textarea:focus-visible,
   .image-thumb,
   .detail-thumb { min-width: 72px; }
 }
+
+/* Modern app shell refresh */
+:root {
+  --bg: #eef4fb;
+  --surface: #ffffff;
+  --surface-soft: #f8fbff;
+  --surface-muted: #eef5ff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: #dbe7f3;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-deep: #1e3a8a;
+  --accent: #14b8a6;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 24px 54px rgba(37, 99, 235, 0.22);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.22), transparent 30%),
+    radial-gradient(circle at 85% 12%, rgba(20, 184, 166, 0.18), transparent 32%),
+    linear-gradient(180deg, #eaf3ff 0%, #f8fbff 48%, #eef4fb 100%);
+}
+
+.phone {
+  max-width: 460px;
+  background: linear-gradient(180deg, #f8fbff, #eef4fb);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18);
+}
+
+.main-content {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.tab-screen {
+  height: 100%;
+  overflow-y: auto;
+  padding-bottom: calc(104px + var(--safe-bottom));
+  scroll-behavior: smooth;
+}
+
+.login-screen,
+.top-wrap {
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(20, 184, 166, 0.9)),
+    #2563eb;
+}
+
+.brand-badge,
+.btn-primary,
+.fab {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  box-shadow: var(--shadow-strong);
+}
+
+.btn-secondary {
+  background: #eff6ff;
+  color: var(--primary-deep);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.14);
+}
+
+.btn-danger {
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+.field,
+.search-wrap,
+.toolbar-card,
+.section-card,
+.stat-card,
+.mini-card,
+.sales-stat-card,
+.finance-card,
+.profile-card,
+.action-card,
+.earnings-card,
+.inventory-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: var(--shadow);
+}
+
+.top-wrap {
+  padding-bottom: 92px;
+  border-bottom-left-radius: 34px;
+  border-bottom-right-radius: 34px;
+}
+
+.dashboard-title,
+.page-hero h2 {
+  letter-spacing: -0.04em;
+}
+
+.page-hero {
+  background: linear-gradient(145deg, #ffffff, #edf7ff);
+  border: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+.analytics-hero,
+.finance-hero,
+.profile-hero,
+.compact-hero {
+  background: linear-gradient(145deg, #ffffff, #edf7ff);
+}
+
+.page-kicker {
+  color: var(--primary);
+}
+
+.stat-icon,
+.action-icon {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(20, 184, 166, 0.14));
+  color: var(--primary-deep);
+}
+
+.finance-card.accent-blue { background: linear-gradient(145deg, #ffffff, #eff6ff); }
+.finance-card.accent-indigo { background: linear-gradient(145deg, #ffffff, #eef2ff); }
+.finance-card.accent-green { background: linear-gradient(145deg, #ffffff, #ecfdf5); }
+.finance-card.accent-teal { background: linear-gradient(145deg, #ffffff, #f0fdfa); }
+
+.finance-card-value,
+.sales-stat-value,
+.stat-value,
+.mini-value,
+.earnings-profit {
+  color: #0f172a;
+  letter-spacing: -0.04em;
+}
+
+.inventory-card {
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.inventory-card-main,
+.item-card {
+  align-items: stretch;
+  gap: 14px;
+}
+
+.item-photo,
+.slow-item-image {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #dbeafe, #ccfbf1);
+  color: var(--primary-deep);
+  font-weight: 900;
+}
+
+.inventory-card .item-photo {
+  width: 92px;
+  height: 92px;
+  border-radius: 20px;
+}
+
+.item-name {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.item-side {
+  min-width: 88px;
+}
+
+.item-price {
+  color: var(--primary-deep);
+  font-size: 1.02rem;
+}
+
+.status.listed,
+.status.available {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status.sold {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status.draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status.archived {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.age-badge.is-alert-30,
+.age-badge.is-alert-60,
+.age-badge.is-alert-90 {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.bottom-nav {
+  left: 14px;
+  right: 14px;
+  bottom: calc(12px + var(--safe-bottom));
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.nav-item.active .nav-icon-wrap {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+}
+
+.nav-item.active .nav-label {
+  color: var(--primary-deep);
+}
+
+.fab {
+  width: 62px;
+  height: 62px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  color: #fff;
+  font-weight: 900;
+}
+
+.fab span {
+  line-height: 0.8;
+  font-size: 1.5rem;
+}
+
+.fab small {
+  font-size: 0.66rem;
+  line-height: 1;
+  margin-top: -8px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.insight-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px;
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  padding: 12px;
+}
+
+.insight-pill span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.insight-pill strong {
+  color: var(--primary-deep);
+}
+
+.slow-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.slow-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.slow-item span {
+  display: grid;
+  gap: 4px;
+}
+
+.slow-item small {
+  color: var(--muted);
+}
+
+.compact-empty {
+  padding: 12px;
+  min-height: auto;
+}
+
+.finance-analytics-heading {
+  background: linear-gradient(135deg, #eff6ff, #f0fdfa);
+}
+
+@media (max-width: 480px) {
+  .bottom-nav {
+    left: 10px;
+    right: 10px;
+  }
+
+  .inventory-card .item-photo {
+    width: 84px;
+    height: 84px;
+  }
+}
