@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const analytics = window.PalletFlowAnalytics;
   const scanner = window.PalletFlowScanner;
   const labels = window.PalletFlowLabels;
+  const exporter = window.PalletFlowExport;
 
   const i18n = i18nFactory.createI18n(storage.getLanguage());
   let items = storage.loadItems();
@@ -1484,37 +1485,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function exportCsv() {
-    const headers = [
-      "itemId",
-      "name",
-      "description",
-      "category",
-      "cost",
-      "listedPrice",
-      "soldPrice",
-      "saleStatus",
-      "dateAdded",
-      "dateSold",
-      "storageLocation",
-      "customLocation",
-      "soldPlatform",
-      "originalBarcode",
-      "internalBarcode",
-      "quantity",
-      "soldQuantity",
-      "source",
-      "notes"
-    ];
-    const rows = items.map(function (item) {
-      return headers.map(function (header) {
-        return item[header] == null ? "" : String(item[header]);
-      });
-    });
-    const csv = [headers.join(",")].concat(rows.map(function (row) {
-      return row.map(function (value) {
-        return "\"" + value.replace(/"/g, "\"\"") + "\"";
-      }).join(",");
-    })).join("\n");
+    const csv = exporter.buildCsv(items);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
