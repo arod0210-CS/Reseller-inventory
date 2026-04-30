@@ -111,6 +111,9 @@ document.addEventListener("DOMContentLoaded", function () {
     profileLanguageValue: document.getElementById("profileLanguageValue"),
     profileLastUpdated: document.getElementById("profileLastUpdated"),
     profileCategories: document.getElementById("profileCategories"),
+    scannerEndpointInput: document.getElementById("scannerEndpointInput"),
+    saveScannerEndpointBtn: document.getElementById("saveScannerEndpointBtn"),
+    clearScannerEndpointBtn: document.getElementById("clearScannerEndpointBtn"),
     profileAddBtn: document.getElementById("profileAddBtn"),
     profileScannerBtn: document.getElementById("profileScannerBtn"),
     exportCsvBtn: document.getElementById("exportCsvBtn"),
@@ -1665,6 +1668,18 @@ document.addEventListener("DOMContentLoaded", function () {
     showToast(t("languageSaved"));
   }
 
+  function saveScannerEndpointSetting() {
+    const value = storage.saveScannerEndpoint(refs.scannerEndpointInput.value);
+    refs.scannerEndpointInput.value = value;
+    showToast(value ? t("scannerEndpointSaved") : t("scannerEndpointCleared"));
+  }
+
+  function clearScannerEndpointSetting() {
+    refs.scannerEndpointInput.value = "";
+    storage.saveScannerEndpoint("");
+    showToast(t("scannerEndpointCleared"));
+  }
+
   function handleItemActionClick(event) {
     const openButton = event.target.closest(".action-open-item");
     if (openButton) {
@@ -1926,6 +1941,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   refs.exportCsvBtn.addEventListener("click", exportCsv);
   refs.resetDemoBtn.addEventListener("click", resetDemoData);
+  refs.saveScannerEndpointBtn.addEventListener("click", saveScannerEndpointSetting);
+  refs.clearScannerEndpointBtn.addEventListener("click", clearScannerEndpointSetting);
 
   navItems.forEach(function (item) {
     item.addEventListener("click", function () {
@@ -2014,6 +2031,7 @@ document.addEventListener("DOMContentLoaded", function () {
   resetQuickForm();
   resetFullForm();
   resetScannerForm();
+  refs.scannerEndpointInput.value = storage.getScannerEndpoint();
   captureItemSheetSnapshot();
   captureTransactionSnapshot();
   refs.inventorySortSelect.value = state.inventorySort;

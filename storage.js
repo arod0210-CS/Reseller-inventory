@@ -3,6 +3,7 @@
 
   const ITEMS_KEY = "palletflow_items";
   const LANGUAGE_KEY = "palletflow_language";
+  const SCANNER_ENDPOINT_KEY = "palletflow_scanner_endpoint";
 
   const seedItems = [
     {
@@ -202,14 +203,31 @@
     return next;
   }
 
+  function getScannerEndpoint() {
+    return String(localStorage.getItem(SCANNER_ENDPOINT_KEY) || "").trim();
+  }
+
+  function saveScannerEndpoint(endpoint) {
+    const next = String(endpoint || "").trim();
+    if (next) {
+      localStorage.setItem(SCANNER_ENDPOINT_KEY, next);
+    } else {
+      localStorage.removeItem(SCANNER_ENDPOINT_KEY);
+    }
+    return next;
+  }
+
   global.PalletFlowStorage = {
     ITEMS_KEY: ITEMS_KEY,
     LANGUAGE_KEY: LANGUAGE_KEY,
+    SCANNER_ENDPOINT_KEY: SCANNER_ENDPOINT_KEY,
     seedItems: seedItems,
     loadItems: loadItems,
     saveItems: saveItems,
     resetItems: resetItems,
     getLanguage: getLanguage,
-    saveLanguage: saveLanguage
+    saveLanguage: saveLanguage,
+    getScannerEndpoint: getScannerEndpoint,
+    saveScannerEndpoint: saveScannerEndpoint
   };
 })(window);

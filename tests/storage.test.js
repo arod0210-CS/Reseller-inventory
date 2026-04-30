@@ -57,4 +57,10 @@ assert.equal(storage.getLanguage(), 'es');
 assert.equal(storage.saveLanguage('fr'), 'en');
 assert.equal(storage.getLanguage(), 'en');
 
+assert.equal(storage.getScannerEndpoint(), '');
+assert.equal(storage.saveScannerEndpoint(' /api/scan-product '), '/api/scan-product');
+assert.equal(storage.getScannerEndpoint(), '/api/scan-product');
+assert.equal(storage.saveScannerEndpoint(''), '');
+assert.equal(storage.getScannerEndpoint(), '');
+
 console.log('storage.test.js passed');

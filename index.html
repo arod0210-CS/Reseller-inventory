@@ -442,6 +442,24 @@
 
             <div class="section-card">
               <div class="section-header">
+                <div class="section-title" data-i18n="scannerSettingsTitle">Scanner Backend</div>
+                <div class="section-caption" data-i18n="scannerSettingsCaption">Optional endpoint for real AI photo recognition.</div>
+              </div>
+              <div class="form-grid">
+                <div class="input-wrap">
+                  <label for="scannerEndpointInput" data-i18n="scannerEndpointLabel">Backend Endpoint</label>
+                  <input type="url" id="scannerEndpointInput" data-i18n-placeholder="placeholderScannerEndpoint" placeholder="/api/scan-product" autocomplete="off" />
+                  <div class="field-hint" data-i18n="scannerEndpointHint">Keep API keys on the backend. This app only stores the endpoint URL.</div>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary" id="saveScannerEndpointBtn" type="button" data-i18n="saveScannerEndpoint">Save Scanner Endpoint</button>
+                  <button class="btn btn-secondary" id="clearScannerEndpointBtn" type="button" data-i18n="clearScannerEndpoint">Clear</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-header">
                 <div class="section-title" data-i18n="toolsTitle">Tools</div>
                 <div class="section-caption" data-i18n="toolsCaption">Export, scan, or reset this app demo.</div>
               </div>
