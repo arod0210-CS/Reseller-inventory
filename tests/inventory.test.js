@@ -70,4 +70,26 @@ assert.deepEqual(sold.images, [img1, img2]);
 const matches = inventory.filterItems([sold], { query: 'sneakers facebook clothing used', filters: { saleStatus: 'sold' } }, new Date());
 assert.equal(matches.length, 1);
 
+const conditionMatches = inventory.filterItems([sold], { query: '', filters: { condition: 'used' } }, new Date());
+assert.equal(conditionMatches.length, 1);
+
+const conditionMisses = inventory.filterItems([sold], { query: '', filters: { condition: 'new' } }, new Date());
+assert.equal(conditionMisses.length, 0);
+
+const highProfitMatches = inventory.filterItems([sold], { query: '', filters: { profitRange: '25-100' } }, new Date());
+assert.equal(highProfitMatches.length, 1);
+
+const highProfitMisses = inventory.filterItems([sold], { query: '', filters: { profitRange: '100-plus' } }, new Date());
+assert.equal(highProfitMisses.length, 0);
+
+const lossItem = inventory.createItem({
+  name: 'Loss Item',
+  cost: 50,
+  listedPrice: 25,
+  quantity: 1,
+  saleStatus: 'listed'
+}, [sold]);
+const lossMatches = inventory.filterItems([lossItem], { query: '', filters: { profitRange: 'loss' } }, new Date());
+assert.equal(lossMatches.length, 1);
+
 console.log('inventory.test.js passed');

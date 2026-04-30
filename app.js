@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", function () {
       category: "all",
       location: "all",
       saleStatus: "all",
+      condition: "all",
+      profitRange: "all",
       age: "all"
     },
     financeRange: "today",
@@ -127,6 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
     filterCategorySelect: document.getElementById("filterCategorySelect"),
     filterLocationSelect: document.getElementById("filterLocationSelect"),
     filterStatusSelect: document.getElementById("filterStatusSelect"),
+    filterConditionSelect: document.getElementById("filterConditionSelect"),
+    filterProfitSelect: document.getElementById("filterProfitSelect"),
     filterAgeSelect: document.getElementById("filterAgeSelect"),
     clearFilterBtn: document.getElementById("clearFilterBtn"),
     applyFilterBtn: document.getElementById("applyFilterBtn"),
@@ -292,6 +296,44 @@ document.addEventListener("DOMContentLoaded", function () {
     return items;
   }
 
+  function clearFieldError(field) {
+    if (!field) {
+      return;
+    }
+    field.classList.remove("is-invalid");
+    field.removeAttribute("aria-invalid");
+  }
+
+  function markFieldError(field, message) {
+    if (!field) {
+      showToast(message);
+      return null;
+    }
+    field.classList.add("is-invalid");
+    field.setAttribute("aria-invalid", "true");
+    showToast(message);
+    field.focus();
+    return null;
+  }
+
+  function clearSheetErrors() {
+    [
+      refs.quickName,
+      refs.quickCost,
+      refs.quickListedPrice,
+      refs.quickStorage,
+      refs.quickCustomLocation,
+      refs.fullName,
+      refs.fullCost,
+      refs.fullListedPrice,
+      refs.fullStorage,
+      refs.fullCustomLocation,
+      refs.fullSoldPrice,
+      refs.fullDateSold,
+      refs.fullSoldPlatform
+    ].forEach(clearFieldError);
+  }
+
   function getLatestUpdateValue() {
     return items.map(function (item) {
       return item.lastUpdated || item.dateAdded;
@@ -304,6 +346,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function getDisplayPlatform(item) {
     return inventory.getPlatformLabel(item.soldPlatform, t);
+  }
+
+  function getConditionLabel(condition) {
+    const keyMap = {
+      "new": "conditionNew",
+      "open-box": "conditionOpenBox",
+      "used": "conditionUsed",
+      "for-parts": "conditionForParts"
+    };
+    return t(keyMap[condition] || "conditionUsed");
+  }
+
+  function getProfitRangeLabel(range) {
+    const keyMap = {
+      "loss": "filterProfitLoss",
+      "0-25": "filterProfit025",
+      "25-100": "filterProfit25100",
+      "100-plus": "filterProfit100Plus"
+    };
+    return t(keyMap[range] || "filterAll");
   }
 
   function getItemAgeLabel(item) {
@@ -415,6 +477,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resetQuickForm() {
+    clearSheetErrors();
     refs.quickName.value = "";
     refs.quickCategory.value = "electronics";
     refs.quickQuantity.value = "1";
@@ -426,6 +489,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resetFullForm() {
+    clearSheetErrors();
     refs.fullName.value = "";
     refs.fullDescription.value = "";
     refs.fullCategory.value = "electronics";
@@ -558,6 +622,8 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.filterCategorySelect.value = state.inventoryFilters.category;
     refs.filterLocationSelect.value = state.inventoryFilters.location;
     refs.filterStatusSelect.value = state.inventoryFilters.saleStatus;
+    refs.filterConditionSelect.value = state.inventoryFilters.condition;
+    refs.filterProfitSelect.value = state.inventoryFilters.profitRange;
     refs.filterAgeSelect.value = state.inventoryFilters.age;
     refs.filterBackdrop.classList.add("show");
   }
@@ -736,6 +802,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (state.inventoryFilters.saleStatus !== "all") {
       chips.push(inventory.getSaleStatusLabel(state.inventoryFilters.saleStatus, t));
     }
+    if (state.inventoryFilters.condition !== "all") {
+      chips.push(getConditionLabel(state.inventoryFilters.condition));
+    }
+    if (state.inventoryFilters.profitRange !== "all") {
+      chips.push(getProfitRangeLabel(state.inventoryFilters.profitRange));
+    }
     if (state.inventoryFilters.age !== "all") {
       const ageLabels = {
         "new": t("filterAgingNew"),
@@ -878,13 +950,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }, new Date()), "newest", new Date()).slice(0, 5);
     const attentionItems = inventory.getAgingItems(items, 30, new Date()).slice(0, 5);
 
-    refs.homeStatAvailable.textContent = number(overview.availableItemsCount);
-    refs.homeStatRevenue.textContent = currency(overview.totalRevenue);
-    refs.homeStatProfit.textContent = currency(overview.totalProfit);
-    refs.homeStatAge90.textContent = number(overview.age90);
-    refs.homeAge30.textContent = number(overview.age30);
-    refs.homeAge60.textContent = number(overview.age60);
-    refs.homeInventoryValue.textContent = currency(overview.unsoldInventoryValue);
+    const lowStockCount = inventory.getAvailableItems(items).filter(function (item) {
+      return item.quantity <= 1;
+    }).length;
+
+    refs.homeStatAvailable.textContent = number(items.length);
+    refs.homeStatRevenue.textContent = currency(overview.unsoldInventoryValue);
+    refs.homeStatProfit.textContent = currency(overview.totalCost);
+    refs.homeStatAge90.textContent = currency(overview.inventoryPotentialProfit);
+    refs.homeAge30.textContent = number(overview.soldItemsCount);
+    refs.homeAge60.textContent = number(lowStockCount);
+    refs.homeInventoryValue.textContent = number(overview.age90);
 
     if (!filteredItems.length) {
       renderEmptyState(refs.homeRecentList, "noItems");
@@ -1156,11 +1232,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function validateStorage(storageValue, customValue) {
     if (!storageValue) {
-      showToast(t("chooseStorage"));
       return false;
     }
     if (storageValue === "other" && !inventory.trimString(customValue)) {
-      showToast(t("enterCustomLocation"));
       return false;
     }
     return true;
@@ -1178,28 +1252,25 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function readQuickPayload() {
+    clearSheetErrors();
     const name = inventory.trimString(refs.quickName.value);
     const cost = parseMoneyField(refs.quickCost.value);
     const listedPrice = parseMoneyField(refs.quickListedPrice.value);
 
     if (!name) {
-      showToast(t("enterName"));
-      refs.quickName.focus();
-      return null;
+      return markFieldError(refs.quickName, t("enterName"));
     }
     if (cost == null) {
-      showToast(t("enterCost"));
-      refs.quickCost.focus();
-      return null;
+      return markFieldError(refs.quickCost, t("enterCost"));
     }
     if (listedPrice == null) {
-      showToast(t("enterListedPrice"));
-      refs.quickListedPrice.focus();
-      return null;
+      return markFieldError(refs.quickListedPrice, t("enterListedPrice"));
+    }
+    if (!refs.quickStorage.value) {
+      return markFieldError(refs.quickStorage, t("chooseStorage"));
     }
     if (!validateStorage(refs.quickStorage.value, refs.quickCustomLocation.value)) {
-      refs.quickStorage.focus();
-      return null;
+      return markFieldError(refs.quickCustomLocation, t("enterCustomLocation"));
     }
 
     return {
@@ -1226,28 +1297,25 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function readFullPayload() {
+    clearSheetErrors();
     const name = inventory.trimString(refs.fullName.value);
     const cost = parseMoneyField(refs.fullCost.value);
     const listedPrice = parseMoneyField(refs.fullListedPrice.value);
 
     if (!name) {
-      showToast(t("enterName"));
-      refs.fullName.focus();
-      return null;
+      return markFieldError(refs.fullName, t("enterName"));
     }
     if (cost == null) {
-      showToast(t("enterCost"));
-      refs.fullCost.focus();
-      return null;
+      return markFieldError(refs.fullCost, t("enterCost"));
     }
     if (listedPrice == null) {
-      showToast(t("enterListedPrice"));
-      refs.fullListedPrice.focus();
-      return null;
+      return markFieldError(refs.fullListedPrice, t("enterListedPrice"));
+    }
+    if (!refs.fullStorage.value) {
+      return markFieldError(refs.fullStorage, t("chooseStorage"));
     }
     if (!validateStorage(refs.fullStorage.value, refs.fullCustomLocation.value)) {
-      refs.fullStorage.focus();
-      return null;
+      return markFieldError(refs.fullCustomLocation, t("enterCustomLocation"));
     }
 
     const payload = {
@@ -1276,19 +1344,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (payload.saleStatus === "sold") {
       const soldPrice = resolveSoldPrice(refs.fullSoldPrice.value, payload.listedPrice);
       if (soldPrice == null) {
-        showToast(t("enterSoldPrice"));
-        refs.fullSoldPrice.focus();
-        return null;
+        return markFieldError(refs.fullSoldPrice, t("enterSoldPrice"));
       }
       if (!refs.fullDateSold.value) {
-        showToast(t("chooseSoldDate"));
-        refs.fullDateSold.focus();
-        return null;
+        return markFieldError(refs.fullDateSold, t("chooseSoldDate"));
       }
       if (!refs.fullSoldPlatform.value) {
-        showToast(t("chooseSoldPlatform"));
-        refs.fullSoldPlatform.focus();
-        return null;
+        return markFieldError(refs.fullSoldPlatform, t("chooseSoldPlatform"));
       }
       payload.soldPrice = soldPrice;
       payload.dateSold = refs.fullDateSold.value;
@@ -1477,6 +1539,8 @@ document.addEventListener("DOMContentLoaded", function () {
       category: "all",
       location: "all",
       saleStatus: "all",
+      condition: "all",
+      profitRange: "all",
       age: "all"
     };
     refs.homeSearchInput.value = "";
@@ -1499,8 +1563,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!file) {
       return;
     }
-    itemSheetImageData = await scanner.fileToDataUrl(file);
-    updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, itemSheetImageData);
+    const imageDataUrl = await scanner.fileToDataUrl(file);
+    itemSheetImageData = normalizeSheetImages(itemSheetImageData.concat([imageDataUrl]));
+    itemSheetMainImage = itemSheetMainImage || itemSheetImageData[0] || "";
+    renderSheetImageGallery();
+    captureItemSheetSnapshot();
   }
 
   async function handleScannerImageChange() {
@@ -1518,6 +1585,7 @@ document.addEventListener("DOMContentLoaded", function () {
       imageDataUrl: scannerImageData
     });
 
+    refs.scannerBarcodeInput.value = result.draft.originalBarcode || refs.scannerBarcodeInput.value;
     refs.scannerName.value = result.draft.name || refs.scannerName.value;
     refs.scannerDescription.value = result.draft.description || refs.scannerDescription.value;
     refs.scannerCategory.value = result.draft.category || refs.scannerCategory.value;
@@ -1604,6 +1672,8 @@ document.addEventListener("DOMContentLoaded", function () {
       category: "all",
       location: "all",
       saleStatus: "all",
+      condition: "all",
+      profitRange: "all",
       age: "all"
     };
     closeFilters();
@@ -1614,6 +1684,8 @@ document.addEventListener("DOMContentLoaded", function () {
       category: refs.filterCategorySelect.value,
       location: refs.filterLocationSelect.value,
       saleStatus: refs.filterStatusSelect.value,
+      condition: refs.filterConditionSelect.value,
+      profitRange: refs.filterProfitSelect.value,
       age: refs.filterAgeSelect.value
     };
     closeFilters();
@@ -1651,6 +1723,28 @@ document.addEventListener("DOMContentLoaded", function () {
   refs.fullScannerBtn.addEventListener("click", openScanner);
   refs.saveQuickBtn.addEventListener("click", saveQuickItem);
   refs.saveFullBtn.addEventListener("click", saveFullItem);
+  [
+    refs.quickName,
+    refs.quickCost,
+    refs.quickListedPrice,
+    refs.quickStorage,
+    refs.quickCustomLocation,
+    refs.fullName,
+    refs.fullCost,
+    refs.fullListedPrice,
+    refs.fullStorage,
+    refs.fullCustomLocation,
+    refs.fullSoldPrice,
+    refs.fullDateSold,
+    refs.fullSoldPlatform
+  ].forEach(function (field) {
+    field.addEventListener("input", function () {
+      clearFieldError(field);
+    });
+    field.addEventListener("change", function () {
+      clearFieldError(field);
+    });
+  });
   refs.fullImageInput.addEventListener("change", handleFullImageChange);
   refs.fullImageGallery.addEventListener("click", function (event) {
     const button = event.target.closest("[data-image-index]");

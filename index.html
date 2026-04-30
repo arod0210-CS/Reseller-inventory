@@ -567,6 +567,28 @@
               </div>
 
               <div class="input-wrap">
+                <label for="filterConditionSelect" data-i18n="fullCondition">Condition</label>
+                <select id="filterConditionSelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="new" data-i18n="conditionNew">New</option>
+                  <option value="open-box" data-i18n="conditionOpenBox">Open box</option>
+                  <option value="used" data-i18n="conditionUsed">Used</option>
+                  <option value="for-parts" data-i18n="conditionForParts">For parts</option>
+                </select>
+              </div>
+
+              <div class="input-wrap">
+                <label for="filterProfitSelect" data-i18n="filterProfitRange">Profit Range</label>
+                <select id="filterProfitSelect">
+                  <option value="all" data-i18n="filterAll">All</option>
+                  <option value="loss" data-i18n="filterProfitLoss">Loss / below cost</option>
+                  <option value="0-25" data-i18n="filterProfit025">$0 - $25</option>
+                  <option value="25-100" data-i18n="filterProfit25100">$25 - $100</option>
+                  <option value="100-plus" data-i18n="filterProfit100Plus">$100+</option>
+                </select>
+              </div>
+
+              <div class="input-wrap">
                 <label for="filterAgeSelect" data-i18n="filterAge">Age Alert</label>
                 <select id="filterAgeSelect">
                   <option value="all" data-i18n="filterAll">All</option>
@@ -888,11 +910,11 @@
             <div class="sheet-header">
               <div>
                 <div class="sheet-title" data-i18n="scannerTitle">AI Scanner</div>
-                <div class="sheet-subtitle" data-i18n="scannerSubtitle">Future-ready barcode and photo intake.</div>
+                <div class="sheet-subtitle" data-i18n="scannerSubtitle">Barcode and photo-assisted item intake.</div>
               </div>
               <button class="close-btn" id="closeScannerBtn" type="button" aria-label="Close scanner">&#10005;</button>
             </div>
-            <div class="banner" data-i18n="scannerBanner">AI lookup is not connected yet. Manual entry is available.</div>
+            <div class="banner" data-i18n="scannerBanner">Enter a barcode or upload a photo to create a verified draft.</div>
             <div class="form-grid">
               <div class="input-wrap">
                 <label for="scannerBarcodeInput" data-i18n="scannerBarcode">Scan / Enter Barcode</label>

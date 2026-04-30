@@ -876,6 +876,34 @@
     });
   }
 
+  function getProfitForFilter(item) {
+    if (item.salesHistory && item.salesHistory.length) {
+      return getRealizedProfit(item);
+    }
+    return getPotentialProfit(item);
+  }
+
+  function matchesProfitRange(item, rangeKey) {
+    if (!rangeKey || rangeKey === "all") {
+      return true;
+    }
+
+    const profit = getProfitForFilter(item);
+    if (rangeKey === "loss") {
+      return profit < 0;
+    }
+    if (rangeKey === "0-25") {
+      return profit >= 0 && profit <= 25;
+    }
+    if (rangeKey === "25-100") {
+      return profit > 25 && profit <= 100;
+    }
+    if (rangeKey === "100-plus") {
+      return profit > 100;
+    }
+    return true;
+  }
+
   function matchesFilters(item, filters, nowDate) {
     const activeFilters = filters || {};
 
@@ -888,6 +916,14 @@
     }
 
     if (activeFilters.saleStatus && activeFilters.saleStatus !== "all" && item.saleStatus !== activeFilters.saleStatus) {
+      return false;
+    }
+
+    if (activeFilters.condition && activeFilters.condition !== "all" && item.condition !== activeFilters.condition) {
+      return false;
+    }
+
+    if (!matchesProfitRange(item, activeFilters.profitRange)) {
       return false;
     }
 
@@ -1001,6 +1037,8 @@
     getRealizedProfit: getRealizedProfit,
     getProfitMargin: getProfitMargin,
     getLatestSale: getLatestSale,
+    getProfitForFilter: getProfitForFilter,
+    matchesProfitRange: matchesProfitRange,
     matchesSearch: matchesSearch,
     matchesFilters: matchesFilters,
     filterItems: filterItems,
