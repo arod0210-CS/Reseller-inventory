@@ -55,7 +55,7 @@ It is built as a lightweight browser app with vanilla HTML/CSS/JavaScript and `l
 - Known demo product lookup + fallback draft generation
 - Estimated category/price suggestions with verification messaging
 
-> Note: the scanner works fully in-browser as a draft assistant. A real external AI/product database lookup would require an API/backend endpoint and credentials.
+> Note: the scanner works fully in-browser as a draft assistant: it can use the browser BarcodeDetector when available, look up numeric UPC/EAN codes through Open Food Facts, and fall back to local draft generation. True photo-based AI recognition beyond barcode detection still requires a backend AI/API key.
 
 ### UI / Mobile Experience
 
@@ -102,7 +102,7 @@ npm test
 npm run build
 ```
 
-Current tests cover important inventory logic, image/main-image persistence, filtering, profit ranges, sale flow behavior, and scanner draft generation.
+Current tests cover important inventory logic, image/main-image persistence, filtering, profit ranges, sale flow behavior, scanner draft generation, and mocked product-database lookup.
 
 ---
 
@@ -115,7 +115,7 @@ app.js              UI state, rendering, forms, navigation
 inventory.js        Inventory model, normalization, filters, sorting, sales
 finance.js          Finance metrics and portfolio summaries
 analytics.js        Chart data and rendering helpers
-scanner.js          Barcode/photo draft assistant
+scanner.js          Barcode/photo draft assistant with UPC lookup fallback
 storage.js          localStorage persistence and seed data
 labels.js           Label preview/download helpers
 i18n.js             English/Spanish text

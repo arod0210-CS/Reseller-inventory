@@ -914,7 +914,7 @@
               </div>
               <button class="close-btn" id="closeScannerBtn" type="button" aria-label="Close scanner">&#10005;</button>
             </div>
-            <div class="banner" data-i18n="scannerBanner">Enter a barcode or upload a photo to create a verified draft.</div>
+            <div class="banner" data-i18n="scannerBanner">Scan a barcode, upload a product photo, or look up a UPC to create a draft.</div>
             <div class="form-grid">
               <div class="input-wrap">
                 <label for="scannerBarcodeInput" data-i18n="scannerBarcode">Scan / Enter Barcode</label>
@@ -922,7 +922,7 @@
               </div>
               <div class="input-wrap">
                 <label for="scannerPhotoInput" data-i18n="scannerPhoto">Upload or Take Photo</label>
-                <input type="file" id="scannerPhotoInput" accept="image/*" />
+                <input type="file" id="scannerPhotoInput" accept="image/*" capture="environment" />
                 <div class="image-preview-frame hidden" id="scannerPhotoPreviewWrap">
                   <img id="scannerPhotoPreview" alt="Scanner preview" />
                 </div>
@@ -956,7 +956,7 @@
                 </div>
               </div>
               <div class="button-row">
-                <button class="btn btn-secondary" id="scannerTryBtn" type="button" data-i18n="scannerTry">Try AI Fill</button>
+                <button class="btn btn-secondary" id="scannerTryBtn" type="button" data-i18n="scannerTry">Scan / Look Up</button>
                 <button class="btn btn-primary" id="scannerUseBtn" type="button" data-i18n="scannerUse">Use In Add Form</button>
               </div>
             </div>

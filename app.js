@@ -743,6 +743,7 @@ document.addEventListener("DOMContentLoaded", function () {
     refs.scannerCategory.value = "electronics";
     refs.scannerPrice.value = "";
     refs.scannerPhotoInput.value = "";
+    scannerToastMessage = "";
     scannerImageData = "";
     updateImagePreview(refs.scannerPhotoPreviewWrap, refs.scannerPhotoPreview, scannerImageData);
   }
@@ -1591,30 +1592,63 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     scannerImageData = await scanner.fileToDataUrl(file);
     updateImagePreview(refs.scannerPhotoPreviewWrap, refs.scannerPhotoPreview, scannerImageData);
+    if (!refs.scannerBarcodeInput.value) {
+      const detectedBarcode = await scanner.detectBarcodeFromDataUrl(scannerImageData);
+      if (detectedBarcode) {
+        refs.scannerBarcodeInput.value = detectedBarcode;
+        showToast(t("scannerBarcodeDetected"));
+      }
+    }
   }
 
   async function runScannerLookup() {
-    const result = await scanner.runScannerLookup({
-      barcode: refs.scannerBarcodeInput.value,
-      imageDataUrl: scannerImageData
-    });
+    const previousLabel = refs.scannerTryBtn.textContent;
+    refs.scannerTryBtn.disabled = true;
+    refs.scannerUseBtn.disabled = true;
+    refs.scannerTryBtn.textContent = t("scannerWorking");
 
-    refs.scannerBarcodeInput.value = result.draft.originalBarcode || refs.scannerBarcodeInput.value;
-    refs.scannerName.value = result.draft.name || refs.scannerName.value;
-    refs.scannerDescription.value = result.draft.description || refs.scannerDescription.value;
-    refs.scannerCategory.value = result.draft.category || refs.scannerCategory.value;
-    refs.scannerPrice.value = result.draft.listedPrice == null ? refs.scannerPrice.value : result.draft.listedPrice;
-    scannerToastMessage = result.message;
-    showToast(result.message);
+    try {
+      const result = await scanner.runScannerLookup({
+        barcode: refs.scannerBarcodeInput.value,
+        imageDataUrl: scannerImageData
+      });
+
+      refs.scannerBarcodeInput.value = result.draft.originalBarcode || refs.scannerBarcodeInput.value;
+      refs.scannerName.value = result.draft.name || refs.scannerName.value;
+      refs.scannerDescription.value = result.draft.description || refs.scannerDescription.value;
+      refs.scannerCategory.value = result.draft.category || refs.scannerCategory.value;
+      refs.scannerPrice.value = result.draft.listedPrice == null ? refs.scannerPrice.value : result.draft.listedPrice;
+      if (!scannerImageData && result.draft.itemImage) {
+        scannerImageData = result.draft.itemImage;
+        updateImagePreview(refs.scannerPhotoPreviewWrap, refs.scannerPhotoPreview, scannerImageData, result.draft.name);
+      }
+      scannerToastMessage = result.message;
+      showToast(result.message);
+    } catch (error) {
+      showToast(t("scannerLookupError"));
+    } finally {
+      refs.scannerTryBtn.disabled = false;
+      refs.scannerUseBtn.disabled = false;
+      refs.scannerTryBtn.textContent = previousLabel;
+    }
   }
 
-  function useScannerDraftInForm() {
+  async function useScannerDraftInForm() {
+    if (!refs.scannerName.value && (refs.scannerBarcodeInput.value || scannerImageData)) {
+      await runScannerLookup();
+    }
+    if (!refs.scannerName.value) {
+      showToast(t("enterName"));
+      refs.scannerName.focus();
+      return;
+    }
     openItemSheet("full");
     refs.fullName.value = refs.scannerName.value;
     refs.fullDescription.value = refs.scannerDescription.value;
     refs.fullCategory.value = refs.scannerCategory.value || "other";
     refs.fullListedPrice.value = refs.scannerPrice.value;
     refs.fullBarcode.value = refs.scannerBarcodeInput.value;
+    refs.fullSource.value = refs.fullSource.value || "AI Scanner";
     itemSheetImageData = normalizeSheetImages(scannerImageData ? [scannerImageData] : []);
     itemSheetMainImage = itemSheetImageData[0] || "";
     renderSheetImageGallery();

@@ -32,6 +32,8 @@
     other: 19.99
   };
 
+  const PRODUCT_LOOKUP_TIMEOUT_MS = 4500;
+
   const CATEGORY_KEYWORDS = [
     { category: "electronics", words: ["tv", "laptop", "phone", "tablet", "speaker", "headphone", "camera", "monitor", "console"] },
     { category: "appliances", words: ["mixer", "blender", "microwave", "vacuum", "toaster", "air fryer", "coffee"] },
@@ -67,7 +69,83 @@
 
   function lookupBarcode(barcode) {
     const cleaned = cleanBarcode(barcode);
-    return Promise.resolve(cleaned && KNOWN_PRODUCTS[cleaned] ? KNOWN_PRODUCTS[cleaned] : null);
+    if (!cleaned) {
+      return Promise.resolve(null);
+    }
+    if (KNOWN_PRODUCTS[cleaned]) {
+      return Promise.resolve(Object.assign({ source: "Demo catalog" }, KNOWN_PRODUCTS[cleaned]));
+    }
+    return lookupOpenFoodFacts(cleaned);
+  }
+
+  function getFetch() {
+    return typeof global.fetch === "function" ? global.fetch.bind(global) : null;
+  }
+
+  function lookupOpenFoodFacts(barcode) {
+    const cleaned = cleanBarcode(barcode);
+    const fetcher = getFetch();
+    if (!fetcher || !/^\d{8,14}$/.test(cleaned)) {
+      return Promise.resolve(null);
+    }
+
+    const endpoint = "https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(cleaned) + ".json?fields=product_name,brands,generic_name,categories,categories_tags,image_url,quantity";
+    let controller = null;
+    let timeoutId = null;
+
+    if (typeof global.AbortController === "function") {
+      controller = new global.AbortController();
+      timeoutId = global.setTimeout(function () {
+        controller.abort();
+      }, PRODUCT_LOOKUP_TIMEOUT_MS);
+    }
+
+    return fetcher(endpoint, controller ? { signal: controller.signal } : undefined).then(function (response) {
+      if (!response || !response.ok) {
+        return null;
+      }
+      return response.json();
+    }).then(function (payload) {
+      if (!payload || payload.status !== 1 || !payload.product) {
+        return null;
+      }
+      return normalizeOpenFoodFactsProduct(payload.product);
+    }).catch(function () {
+      return null;
+    }).finally(function () {
+      if (timeoutId) {
+        global.clearTimeout(timeoutId);
+      }
+    });
+  }
+
+  function normalizeOpenFoodFactsProduct(product) {
+    const brand = trimParts(product.brands).split(",")[0];
+    const productName = trimParts(product.product_name || product.generic_name || "");
+    const quantity = trimParts(product.quantity);
+    const nameParts = [brand, productName].filter(Boolean);
+    const name = nameParts.length ? nameParts.join(" ") : "Scanned Product";
+    const categoryText = [product.categories, Array.isArray(product.categories_tags) ? product.categories_tags.join(" ") : "", name].join(" ");
+    const category = inferCategory(categoryText);
+    const estimatedPrice = PRICE_BY_CATEGORY[category] || PRICE_BY_CATEGORY.other;
+    const description = [
+      "Matched product database result.",
+      quantity ? "Package: " + quantity + "." : "",
+      "Verify exact model, condition, and resale comps before listing."
+    ].filter(Boolean).join(" ");
+
+    return {
+      name: name,
+      description: description,
+      category: category,
+      estimatedPrice: estimatedPrice,
+      imageUrl: trimParts(product.image_url),
+      source: "Open Food Facts"
+    };
+  }
+
+  function trimParts(value) {
+    return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
   }
 
   function detectBarcodeFromDataUrl(imageDataUrl) {
@@ -206,14 +284,16 @@
         category: inferredCategory,
         listedPrice: estimatedPrice,
         originalBarcode: barcode,
-        itemImage: imageDataUrl
+        itemImage: imageDataUrl || (lookup && lookup.imageUrl) || "",
+        source: lookup && lookup.source ? lookup.source : "Scanner draft"
       },
-      message: lookup ? "Scanner matched a product draft. Please verify before saving." : "Scanner created a draft from the barcode/photo. Please verify before saving."
+      message: lookup ? "Scanner matched a product draft from " + lookup.source + ". Please verify before saving." : "Scanner created a draft from the barcode/photo. Please verify before saving."
     };
   }
 
   global.PalletFlowScanner = {
     lookupBarcode: lookupBarcode,
+    lookupOpenFoodFacts: lookupOpenFoodFacts,
     detectBarcodeFromDataUrl: detectBarcodeFromDataUrl,
     generateItemDescription: generateItemDescription,
     estimateItemPrice: estimateItemPrice,
