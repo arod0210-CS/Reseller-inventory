@@ -468,10 +468,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const mainImage = getSheetMainImage();
     updateImagePreview(refs.fullImagePreviewWrap, refs.fullImagePreview, mainImage, refs.fullName.value || t("imagePreview"));
     refs.fullImageGallery.innerHTML = itemSheetImageData.length ? itemSheetImageData.map(function (imageUrl, index) {
+      const isMainImage = imageUrl === mainImage;
       return [
-        "<button class=\"image-thumb" + (imageUrl === mainImage ? " active" : "") + "\" type=\"button\" data-image-index=\"" + index + "\" aria-label=\"Make image " + (index + 1) + " main picture\">",
+        "<button class=\"image-thumb" + (isMainImage ? " active" : "") + "\" type=\"button\" data-image-index=\"" + index + "\" aria-label=\"" + escapeHtml(t("makeMainImage", { number: index + 1 })) + "\">",
         "<img src=\"" + escapeHtml(imageUrl) + "\" alt=\"" + escapeHtml((refs.fullName.value || "Item") + " preview " + (index + 1)) + "\" />",
-        "<span>" + (imageUrl === mainImage ? "Main" : "Set main") + "</span>",
+        "<span>" + escapeHtml(isMainImage ? t("mainImage") : t("setMainImage")) + "</span>",
         "</button>"
       ].join("");
     }).join("") : "<div class=\"field-hint\">" + escapeHtml(t("noImage")) + "</div>";
