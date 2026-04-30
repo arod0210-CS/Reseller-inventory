@@ -1530,13 +1530,16 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function handleFullImageChange() {
-    const file = refs.fullImageInput.files && refs.fullImageInput.files[0];
-    if (!file) {
+    const files = Array.from(refs.fullImageInput.files || []);
+    if (!files.length) {
       return;
     }
-    const imageDataUrl = await scanner.fileToDataUrl(file);
-    itemSheetImageData = normalizeSheetImages(itemSheetImageData.concat([imageDataUrl]));
+    const imageDataUrls = await Promise.all(files.map(function (file) {
+      return scanner.fileToDataUrl(file);
+    }));
+    itemSheetImageData = normalizeSheetImages(itemSheetImageData.concat(imageDataUrls));
     itemSheetMainImage = itemSheetMainImage || itemSheetImageData[0] || "";
+    refs.fullImageInput.value = "";
     renderSheetImageGallery();
     captureItemSheetSnapshot();
   }
