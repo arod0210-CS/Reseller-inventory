@@ -293,8 +293,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function saveItems(nextItems) {
-    items = storage.saveItems(nextItems);
-    return items;
+    try {
+      items = storage.saveItems(nextItems);
+      return true;
+    } catch (error) {
+      showToast(t("storageSaveError"));
+      return false;
+    }
   }
 
   function clearFieldError(field) {
@@ -1385,7 +1390,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     const newItem = inventory.createItem(payload, items);
-    saveItems(items.concat([newItem]));
+    if (!saveItems(items.concat([newItem]))) {
+      return;
+    }
     refreshAll();
     closeItemSheet(true);
     setActiveTab("inventory");
@@ -1404,7 +1411,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       const updated = inventory.updateItem(current, payload);
-      saveItems(replaceItem(updated));
+      if (!saveItems(replaceItem(updated))) {
+        return;
+      }
       refreshAll();
       closeItemSheet(true);
       showToast(t("itemUpdated", { name: updated.name }));
@@ -1412,7 +1421,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const newItem = inventory.createItem(payload, items);
-    saveItems(items.concat([newItem]));
+    if (!saveItems(items.concat([newItem]))) {
+      return;
+    }
     refreshAll();
     closeItemSheet(true);
     setActiveTab(newItem.saleStatus === "sold" ? "finance" : "inventory");
@@ -1427,9 +1438,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!window.confirm(t("deleteConfirm", { name: item.name }))) {
       return;
     }
-    saveItems(items.filter(function (entry) {
+    if (!saveItems(items.filter(function (entry) {
       return entry.id !== itemId;
-    }));
+    }))) {
+      return;
+    }
     if (state.detailItemId === itemId) {
       closeDetail();
     }
@@ -1483,7 +1496,9 @@ document.addEventListener("DOMContentLoaded", function () {
         soldPlatform: refs.transactionSoldPlatform.value,
         note: refs.transactionNote.value
       });
-      saveItems(replaceItem(updated));
+      if (!saveItems(replaceItem(updated))) {
+        return;
+      }
       refreshAll();
       closeTransaction(true);
       closeDetail();
@@ -1495,7 +1510,9 @@ document.addEventListener("DOMContentLoaded", function () {
       quantity: quantity,
       note: refs.transactionNote.value
     });
-    saveItems(replaceItem(restocked));
+    if (!saveItems(replaceItem(restocked))) {
+      return;
+    }
     refreshAll();
     closeTransaction(true);
     closeDetail();
@@ -1520,7 +1537,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!window.confirm(t("resetConfirm"))) {
       return;
     }
-    items = storage.resetItems();
+    try {
+      items = storage.resetItems();
+    } catch (error) {
+      showToast(t("storageSaveError"));
+      return;
+    }
     state.homeSearch = "";
     state.inventorySearch = "";
     state.inventorySort = "newest";
