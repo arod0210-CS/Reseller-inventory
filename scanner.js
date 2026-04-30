@@ -33,6 +33,8 @@
   };
 
   const PRODUCT_LOOKUP_TIMEOUT_MS = 4500;
+  const AI_BACKEND_TIMEOUT_MS = 8000;
+  const AI_BACKEND_ENDPOINT_KEY = "palletflow_scanner_endpoint";
 
   const CATEGORY_KEYWORDS = [
     { category: "electronics", words: ["tv", "laptop", "phone", "tablet", "speaker", "headphone", "camera", "monitor", "console"] },
@@ -82,6 +84,96 @@
     return typeof global.fetch === "function" ? global.fetch.bind(global) : null;
   }
 
+  function getConfiguredBackendEndpoint(config) {
+    if (config && config.backendEndpoint) {
+      return trimParts(config.backendEndpoint);
+    }
+    if (global.PALLET_FLOW_SCANNER_ENDPOINT) {
+      return trimParts(global.PALLET_FLOW_SCANNER_ENDPOINT);
+    }
+    try {
+      return global.localStorage ? trimParts(global.localStorage.getItem(AI_BACKEND_ENDPOINT_KEY)) : "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function fetchJsonWithTimeout(endpoint, options, timeoutMs) {
+    const fetcher = getFetch();
+    if (!fetcher) {
+      return Promise.resolve(null);
+    }
+
+    let controller = null;
+    let timeoutId = null;
+    const requestOptions = options || {};
+
+    if (typeof global.AbortController === "function") {
+      controller = new global.AbortController();
+      requestOptions.signal = controller.signal;
+      timeoutId = global.setTimeout(function () {
+        controller.abort();
+      }, timeoutMs);
+    }
+
+    return fetcher(endpoint, requestOptions).then(function (response) {
+      if (!response || !response.ok) {
+        return null;
+      }
+      return response.json();
+    }).catch(function () {
+      return null;
+    }).finally(function () {
+      if (timeoutId) {
+        global.clearTimeout(timeoutId);
+      }
+    });
+  }
+
+  function lookupAiBackend(config) {
+    const endpoint = getConfiguredBackendEndpoint(config);
+    if (!endpoint) {
+      return Promise.resolve(null);
+    }
+
+    return fetchJsonWithTimeout(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        barcode: cleanBarcode(config && config.barcode),
+        imageDataUrl: config && config.imageDataUrl ? config.imageDataUrl : ""
+      })
+    }, AI_BACKEND_TIMEOUT_MS).then(normalizeBackendProduct);
+  }
+
+  function normalizeBackendProduct(payload) {
+    const raw = payload && (payload.draft || payload.product || payload);
+    if (!raw || typeof raw !== "object") {
+      return null;
+    }
+
+    const name = trimParts(raw.name || raw.title || raw.productName || raw.product_name);
+    const description = trimParts(raw.description || raw.summary || raw.notes);
+    const category = inferCategory(trimParts(raw.category || raw.categoryName || "") + " " + name + " " + description);
+    const estimatedPrice = Number(raw.estimatedPrice != null ? raw.estimatedPrice : raw.listedPrice != null ? raw.listedPrice : raw.price);
+    const imageUrl = trimParts(raw.imageUrl || raw.itemImage || raw.image || raw.photoUrl);
+
+    if (!name && !description && !imageUrl && !Number.isFinite(estimatedPrice)) {
+      return null;
+    }
+
+    return {
+      name: name || "AI Scanned Item",
+      description: description || "AI backend generated this product draft. Verify details before listing.",
+      category: category,
+      estimatedPrice: Number.isFinite(estimatedPrice) && estimatedPrice >= 0 ? estimatedPrice : PRICE_BY_CATEGORY[category],
+      imageUrl: imageUrl,
+      source: trimParts(raw.source) || "AI backend"
+    };
+  }
+
   function lookupOpenFoodFacts(barcode) {
     const cleaned = cleanBarcode(barcode);
     const fetcher = getFetch();
@@ -90,32 +182,12 @@
     }
 
     const endpoint = "https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(cleaned) + ".json?fields=product_name,brands,generic_name,categories,categories_tags,image_url,quantity";
-    let controller = null;
-    let timeoutId = null;
 
-    if (typeof global.AbortController === "function") {
-      controller = new global.AbortController();
-      timeoutId = global.setTimeout(function () {
-        controller.abort();
-      }, PRODUCT_LOOKUP_TIMEOUT_MS);
-    }
-
-    return fetcher(endpoint, controller ? { signal: controller.signal } : undefined).then(function (response) {
-      if (!response || !response.ok) {
-        return null;
-      }
-      return response.json();
-    }).then(function (payload) {
+    return fetchJsonWithTimeout(endpoint, undefined, PRODUCT_LOOKUP_TIMEOUT_MS).then(function (payload) {
       if (!payload || payload.status !== 1 || !payload.product) {
         return null;
       }
       return normalizeOpenFoodFactsProduct(payload.product);
-    }).catch(function () {
-      return null;
-    }).finally(function () {
-      if (timeoutId) {
-        global.clearTimeout(timeoutId);
-      }
     });
   }
 
@@ -259,7 +331,11 @@
   async function runScannerLookup(config) {
     const imageDataUrl = config && config.imageDataUrl ? config.imageDataUrl : "";
     const barcode = cleanBarcode(config && config.barcode ? config.barcode : "") || await detectBarcodeFromDataUrl(imageDataUrl);
-    const lookup = await lookupBarcode(barcode);
+    const lookup = await lookupAiBackend({
+      barcode: barcode,
+      imageDataUrl: imageDataUrl,
+      backendEndpoint: config && config.backendEndpoint
+    }) || await lookupBarcode(barcode);
     const inferredName = lookup && lookup.name ? lookup.name : buildNameFromBarcode(barcode);
     const inferredCategory = lookup && lookup.category ? lookup.category : inferCategory(inferredName);
     const generatedDescription = await generateItemDescription({
@@ -293,6 +369,7 @@
 
   global.PalletFlowScanner = {
     lookupBarcode: lookupBarcode,
+    lookupAiBackend: lookupAiBackend,
     lookupOpenFoodFacts: lookupOpenFoodFacts,
     detectBarcodeFromDataUrl: detectBarcodeFromDataUrl,
     generateItemDescription: generateItemDescription,

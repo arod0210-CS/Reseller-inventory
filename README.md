@@ -54,8 +54,9 @@ It is built as a lightweight browser app with vanilla HTML/CSS/JavaScript and `l
 - Photo upload carries into the Add Item form
 - Known demo product lookup + fallback draft generation
 - Estimated category/price suggestions with verification messaging
+- Optional backend AI scanner endpoint support without exposing API keys in the browser
 
-> Note: the scanner works fully in-browser as a draft assistant: it can use the browser BarcodeDetector when available, look up numeric UPC/EAN codes through Open Food Facts, and fall back to local draft generation. True photo-based AI recognition beyond barcode detection still requires a backend AI/API key.
+> Note: the scanner works fully in-browser as a draft assistant: it can use the browser BarcodeDetector when available, look up numeric UPC/EAN codes through Open Food Facts, and fall back to local draft generation. For true photo-based AI recognition, set `window.PALLET_FLOW_SCANNER_ENDPOINT` or localStorage key `palletflow_scanner_endpoint` to a backend endpoint such as `/api/scan-product`; the backend should keep provider API keys in environment variables and return safe draft fields.
 
 ### UI / Mobile Experience
 
@@ -102,7 +103,7 @@ npm test
 npm run build
 ```
 
-Current tests cover important inventory logic, image/main-image persistence, filtering, profit ranges, sale flow behavior, scanner draft generation, and mocked product-database lookup.
+Current tests cover important inventory logic, image/main-image persistence, filtering, profit ranges, sale flow behavior, scanner draft generation, mocked AI-backend lookup, and mocked product-database lookup.
 
 ---
 
@@ -115,7 +116,7 @@ app.js              UI state, rendering, forms, navigation
 inventory.js        Inventory model, normalization, filters, sorting, sales
 finance.js          Finance metrics and portfolio summaries
 analytics.js        Chart data and rendering helpers
-scanner.js          Barcode/photo draft assistant with UPC lookup fallback
+scanner.js          Barcode/photo draft assistant with optional AI backend + UPC fallback
 storage.js          localStorage persistence and seed data
 labels.js           Label preview/download helpers
 i18n.js             English/Spanish text

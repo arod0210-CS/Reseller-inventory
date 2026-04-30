@@ -16,6 +16,37 @@ const scanner = context.window.PalletFlowScanner;
   assert.equal(known.draft.listedPrice, 8.99);
   assert.equal(known.draft.source, 'Demo catalog');
 
+  context.window.PALLET_FLOW_SCANNER_ENDPOINT = '/api/scan-product';
+  context.window.fetch = async function (url, options) {
+    assert.equal(url, '/api/scan-product');
+    assert.equal(options.method, 'POST');
+    const body = JSON.parse(options.body);
+    assert.equal(body.barcode, '777777777777');
+    assert.equal(body.imageDataUrl, 'data:image/jpeg;base64,ai-photo');
+    return {
+      ok: true,
+      json: async function () {
+        return {
+          name: 'Sony Bluetooth Speaker',
+          description: 'AI matched a portable speaker from the photo and barcode.',
+          category: 'electronics',
+          estimatedPrice: 45,
+          imageUrl: 'https://example.com/speaker.jpg',
+          source: 'Vision API'
+        };
+      }
+    };
+  };
+
+  const aiBackend = await scanner.runScannerLookup({ barcode: '777777777777', imageDataUrl: 'data:image/jpeg;base64,ai-photo' });
+  assert.equal(aiBackend.draft.name, 'Sony Bluetooth Speaker');
+  assert.equal(aiBackend.draft.category, 'electronics');
+  assert.equal(aiBackend.draft.originalBarcode, '777777777777');
+  assert.equal(aiBackend.draft.itemImage, 'data:image/jpeg;base64,ai-photo');
+  assert.equal(aiBackend.draft.listedPrice, 45);
+  assert.equal(aiBackend.draft.source, 'Vision API');
+  delete context.window.PALLET_FLOW_SCANNER_ENDPOINT;
+
   context.window.fetch = async function (url) {
     assert.ok(String(url).includes('737628064502'));
     return {
