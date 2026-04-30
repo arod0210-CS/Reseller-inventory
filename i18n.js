@@ -394,6 +394,7 @@
       profitMargin: "Margen de Ganancia",
       inventoryInsights: "Resumen de Inventario",
       inventoryInsightsCaption: "Mezcla de estados y articulos que necesitan atencion.",
+      noSlowMoving: "No hay articulos con bajo stock o movimiento lento ahora.",
       totalRevenue: "Ingresos Totales",
       totalCost: "Costo Total",
       totalProfit: "Ganancia Total",
