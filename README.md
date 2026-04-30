@@ -58,6 +58,22 @@ It is built as a lightweight browser app with vanilla HTML/CSS/JavaScript and `l
 
 > Note: the scanner works fully in-browser as a draft assistant: it can use the browser BarcodeDetector when available, look up numeric UPC/EAN codes through Open Food Facts, and fall back to local draft generation. For true photo-based AI recognition, set `window.PALLET_FLOW_SCANNER_ENDPOINT` or localStorage key `palletflow_scanner_endpoint` to a backend endpoint such as `/api/scan-product`; the backend should keep provider API keys in environment variables and return safe draft fields.
 
+### Optional AI Backend
+
+The repo includes `api/scan-product.js`, a Vercel-style serverless endpoint example. Deploy it somewhere that supports Node serverless functions, then set this environment variable on the backend host:
+
+```bash
+OPENAI_API_KEY=your_backend_only_key
+```
+
+In the app, open **Settings → Scanner Backend** and save the endpoint URL, for example:
+
+```text
+/api/scan-product
+```
+
+Never paste provider API keys into the browser app. The browser stores only the endpoint URL.
+
 ### UI / Mobile Experience
 
 - Screen-based app layout
@@ -117,6 +133,7 @@ inventory.js        Inventory model, normalization, filters, sorting, sales
 finance.js          Finance metrics and portfolio summaries
 analytics.js        Chart data and rendering helpers
 scanner.js          Barcode/photo draft assistant with optional AI backend + UPC fallback
+api/scan-product.js Optional Node serverless AI scanner backend example
 storage.js          localStorage persistence and seed data
 labels.js           Label preview/download helpers
 i18n.js             English/Spanish text

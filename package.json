@@ -4,7 +4,7 @@
   "private": true,
   "description": "Browser-based reseller inventory management app.",
   "scripts": {
-    "lint": "node --check app.js && node --check inventory.js && node --check storage.js && node --check finance.js && node --check analytics.js && node --check scanner.js && node --check labels.js && node --check export.js && node --check i18n.js",
+    "lint": "node --check app.js && node --check inventory.js && node --check storage.js && node --check finance.js && node --check analytics.js && node --check scanner.js && node --check labels.js && node --check export.js && node --check i18n.js && node --check api/scan-product.js",
     "test": "node tests/inventory.test.js && node tests/scanner.test.js && node tests/finance.test.js && node tests/storage.test.js && node tests/export.test.js && node tests/labels.test.js && node tests/i18n.test.js",
     "build": "npm run lint"
   },
