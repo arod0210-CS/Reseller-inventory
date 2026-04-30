@@ -1232,6 +1232,15 @@ document.addEventListener("DOMContentLoaded", function () {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
   }
 
+  function parseQuantityField(value, fallback) {
+    const cleaned = inventory.trimString(value);
+    if (!cleaned && fallback !== undefined) {
+      return fallback;
+    }
+    const parsed = Number(cleaned);
+    return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
+  }
+
   function validateStorage(storageValue, customValue) {
     if (!storageValue) {
       return false;
@@ -1258,6 +1267,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const name = inventory.trimString(refs.quickName.value);
     const cost = parseMoneyField(refs.quickCost.value);
     const listedPrice = parseMoneyField(refs.quickListedPrice.value);
+    const quantity = parseQuantityField(refs.quickQuantity.value, 1);
 
     if (!name) {
       return markFieldError(refs.quickName, t("enterName"));
@@ -1267,6 +1277,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     if (listedPrice == null) {
       return markFieldError(refs.quickListedPrice, t("enterListedPrice"));
+    }
+    if (quantity == null) {
+      return markFieldError(refs.quickQuantity, t("validQuantity"));
     }
     if (!refs.quickStorage.value) {
       return markFieldError(refs.quickStorage, t("chooseStorage"));
@@ -1282,7 +1295,7 @@ document.addEventListener("DOMContentLoaded", function () {
       source: "",
       cost: cost,
       listedPrice: listedPrice,
-      quantity: refs.quickQuantity.value || 1,
+      quantity: quantity,
       dateAdded: new Date().toISOString(),
       storageLocation: refs.quickStorage.value,
       customLocation: refs.quickCustomLocation.value,
@@ -1303,6 +1316,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const name = inventory.trimString(refs.fullName.value);
     const cost = parseMoneyField(refs.fullCost.value);
     const listedPrice = parseMoneyField(refs.fullListedPrice.value);
+    const quantity = parseQuantityField(refs.fullQuantity.value, 1);
 
     if (!name) {
       return markFieldError(refs.fullName, t("enterName"));
@@ -1312,6 +1326,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     if (listedPrice == null) {
       return markFieldError(refs.fullListedPrice, t("enterListedPrice"));
+    }
+    if (quantity == null) {
+      return markFieldError(refs.fullQuantity, t("validQuantity"));
     }
     if (!refs.fullStorage.value) {
       return markFieldError(refs.fullStorage, t("chooseStorage"));
@@ -1328,7 +1345,7 @@ document.addEventListener("DOMContentLoaded", function () {
       condition: refs.fullCondition.value,
       cost: cost,
       listedPrice: listedPrice,
-      quantity: refs.fullQuantity.value || 1,
+      quantity: quantity,
       dateAdded: refs.fullDateAdded.value || new Date().toISOString(),
       storageLocation: refs.fullStorage.value,
       customLocation: refs.fullCustomLocation.value,
@@ -1429,8 +1446,8 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const quantity = Number(refs.transactionQuantity.value);
-    if (!Number.isFinite(quantity) || quantity < 1) {
+    const quantity = parseQuantityField(refs.transactionQuantity.value);
+    if (quantity == null) {
       showToast(t("validQuantity"));
       refs.transactionQuantity.focus();
       return;
