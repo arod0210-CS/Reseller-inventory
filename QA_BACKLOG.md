@@ -43,7 +43,7 @@ Initial QA sweep completed. Continue QA/Builder loop on Issue 002.
 
 ### Issue 002: Partial sale marks remaining inventory as sold
 Severity: High  
-Status: Ready for Builder  
+Status: Retest Needed  
 Location: `inventory.js` → `normalizeItem()` / `recordSale()`  
 
 Steps to reproduce:
@@ -71,7 +71,7 @@ Details:
 - Do not stop after this fix. After fixing, run build/test/lint and continue to the next issue.
 
 Retest notes:
-Pending.
+Builder fixed `normalizeItem()` so direct sale history no longer forces positive-quantity items to `sold`; partial `recordSale()` now preserves available/listed inventory with remaining quantity. Added inventory and finance regression coverage for selling 1 of 2 units. `npm test` and `npm run build` pass.
 
 ---
 

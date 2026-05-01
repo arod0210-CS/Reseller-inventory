@@ -67,6 +67,34 @@ assert.equal(sold.quantity, 0);
 assert.equal(inventory.getMainImage(sold), img1);
 assert.deepEqual(sold.images, [img1, img2]);
 
+const partialBase = inventory.createItem({
+  name: 'Partial Quantity Item',
+  category: 'tools',
+  cost: 10,
+  listedPrice: 30,
+  quantity: 2,
+  saleStatus: 'listed'
+}, [sold]);
+const partialSale = inventory.recordSale(partialBase, {
+  quantity: 1,
+  soldPrice: 25,
+  dateSold: '2026-04-29',
+  soldPlatform: 'ebay',
+  note: 'Sold one unit'
+});
+
+assert.equal(partialSale.saleStatus, 'available');
+assert.equal(partialSale.quantity, 1);
+assert.equal(partialSale.soldQuantity, 1);
+assert.equal(partialSale.salesHistory.length, 1);
+assert.equal(partialSale.salesHistory[0].quantity, 1);
+assert.equal(inventory.getAvailableItems([partialSale]).length, 1);
+
+const normalizedPartial = inventory.normalizeItems([{ ...partialSale, saleStatus: 'sold' }])[0];
+assert.equal(normalizedPartial.saleStatus, 'available');
+assert.equal(normalizedPartial.quantity, 1);
+assert.equal(normalizedPartial.soldQuantity, 1);
+
 const matches = inventory.filterItems([sold], { query: 'sneakers facebook clothing used', filters: { saleStatus: 'sold' } }, new Date());
 assert.equal(matches.length, 1);
 

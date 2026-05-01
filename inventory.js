@@ -330,14 +330,16 @@
       return sum + sale.quantity;
     }, 0);
     const statusSeed = normalizeSaleStatus(rawItem.saleStatus || rawItem.status);
+    const hasDirectSalesHistory = Array.isArray(rawItem.salesHistory) && rawItem.salesHistory.length > 0;
     const images = normalizeImages(rawItem);
-    const inferredSold = statusSeed === "sold" || (baseQuantity === 0 && soldQuantity > 0);
+    const inferredSold = (statusSeed === "sold" && (!hasDirectSalesHistory || baseQuantity === 0)) || (baseQuantity === 0 && soldQuantity > 0);
     let quantity = inferredSold ? 0 : baseQuantity;
 
     if (!inferredSold && quantity === 0) {
       quantity = 1;
     }
 
+    const normalizedStatus = inferredSold ? "sold" : (statusSeed === "sold" ? "available" : statusSeed);
     const latestSale = salesHistory[salesHistory.length - 1] || null;
     const storageInfo = inferStorageFromRaw(rawItem);
     const preferredItemId = trimString(rawItem.itemId || rawItem.labelId || rawItem.internalBarcode);
@@ -357,7 +359,7 @@
       cost: cost,
       listedPrice: toMoney(rawItem.listedPrice != null ? rawItem.listedPrice : rawItem.onlinePrice != null ? rawItem.onlinePrice : rawItem.price),
       soldPrice: latestSale && latestSale.soldPrice != null ? latestSale.soldPrice : toMoney(rawItem.soldPrice),
-      saleStatus: inferredSold || soldQuantity > 0 ? "sold" : statusSeed,
+      saleStatus: normalizedStatus,
       dateAdded: dateAdded,
       dateSold: latestSale ? latestSale.dateSold : (rawItem.dateSold || rawItem.soldAt ? toIsoDateTime(rawItem.dateSold || rawItem.soldAt, dateAdded) : null),
       storageLocation: storageInfo.storageLocation,
