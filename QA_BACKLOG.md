@@ -43,7 +43,7 @@ Initial QA sweep completed. Continue QA/Builder loop on Issue 002.
 
 ### Issue 002: Partial sale marks remaining inventory as sold
 Severity: High  
-Status: Retest Needed  
+Status: Passed  
 Location: `inventory.js` → `normalizeItem()` / `recordSale()`  
 
 Steps to reproduce:
@@ -71,13 +71,13 @@ Details:
 - Do not stop after this fix. After fixing, run build/test/lint and continue to the next issue.
 
 Retest notes:
-Builder fixed `normalizeItem()` so direct sale history no longer forces positive-quantity items to `sold`; partial `recordSale()` now preserves available/listed inventory with remaining quantity. Added inventory and finance regression coverage for selling 1 of 2 units. `npm test` and `npm run build` pass.
+Passed QA retest. Manual Node regression confirms selling 1 of 2 units leaves quantity 1, saleStatus `available`, available inventory count 1, and correct finance metrics. `npm test` and `npm run build` passed after retest.
 
 ---
 
 ### Issue 003: Empty scanner lookup creates invalid draft text
 Severity: Medium  
-Status: Open  
+Status: Ready for Builder  
 Location: `scanner.js` → `generateItemDescription()` / `runScannerLookup()`  
 
 Steps to reproduce:
