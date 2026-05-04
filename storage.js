@@ -167,14 +167,95 @@
     }
   ];
 
+  const memoryStore = {};
+  const memoryPreferredKeys = {};
+
+  function getStorage() {
+    try {
+      if (global.localStorage) {
+        return global.localStorage;
+      }
+    } catch (error) {
+      // Accessing localStorage itself can fail in locked-down browsers.
+    }
+
+    try {
+      if (typeof localStorage !== "undefined") {
+        return localStorage;
+      }
+    } catch (error) {
+      // Ignore and use the in-memory fallback.
+    }
+
+    return null;
+  }
+
+  function safeGetItem(key) {
+    const hasMemoryValue = Object.prototype.hasOwnProperty.call(memoryStore, key);
+
+    if (memoryPreferredKeys[key]) {
+      return hasMemoryValue ? memoryStore[key] : null;
+    }
+
+    const storage = getStorage();
+
+    if (storage) {
+      try {
+        const value = storage.getItem(key);
+        if (value !== null && typeof value !== "undefined") {
+          return value;
+        }
+      } catch (error) {
+        // Fall through to memoryStore.
+      }
+    }
+
+    return hasMemoryValue ? memoryStore[key] : null;
+  }
+
+  function safeSetItem(key, value) {
+    const next = String(value);
+    memoryStore[key] = next;
+
+    const storage = getStorage();
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.setItem(key, next);
+      delete memoryPreferredKeys[key];
+    } catch (error) {
+      // Keep the in-memory copy as a recoverable fallback.
+      memoryPreferredKeys[key] = true;
+    }
+  }
+
+  function safeRemoveItem(key) {
+    delete memoryStore[key];
+
+    const storage = getStorage();
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.removeItem(key);
+      delete memoryPreferredKeys[key];
+    } catch (error) {
+      // Memory fallback has already removed the value.
+      memoryPreferredKeys[key] = true;
+    }
+  }
+
   function saveItems(items) {
     const normalized = inventory.normalizeItems(items);
-    localStorage.setItem(ITEMS_KEY, JSON.stringify(normalized));
+    safeSetItem(ITEMS_KEY, JSON.stringify(normalized));
     return normalized;
   }
 
   function loadItems() {
-    const raw = localStorage.getItem(ITEMS_KEY);
+    const raw = safeGetItem(ITEMS_KEY);
 
     if (!raw) {
       return saveItems(seedItems);
@@ -193,26 +274,26 @@
   }
 
   function getLanguage() {
-    const stored = localStorage.getItem(LANGUAGE_KEY);
+    const stored = safeGetItem(LANGUAGE_KEY);
     return stored === "es" ? "es" : "en";
   }
 
   function saveLanguage(language) {
     const next = language === "es" ? "es" : "en";
-    localStorage.setItem(LANGUAGE_KEY, next);
+    safeSetItem(LANGUAGE_KEY, next);
     return next;
   }
 
   function getScannerEndpoint() {
-    return String(localStorage.getItem(SCANNER_ENDPOINT_KEY) || "").trim();
+    return String(safeGetItem(SCANNER_ENDPOINT_KEY) || "").trim();
   }
 
   function saveScannerEndpoint(endpoint) {
     const next = String(endpoint || "").trim();
     if (next) {
-      localStorage.setItem(SCANNER_ENDPOINT_KEY, next);
+      safeSetItem(SCANNER_ENDPOINT_KEY, next);
     } else {
-      localStorage.removeItem(SCANNER_ENDPOINT_KEY);
+      safeRemoveItem(SCANNER_ENDPOINT_KEY);
     }
     return next;
   }

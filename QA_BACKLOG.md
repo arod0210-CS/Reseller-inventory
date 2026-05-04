@@ -111,7 +111,7 @@ Passed QA retest. Manual scanner regression confirms `runScannerLookup({})` retu
 
 ### Issue 004: App startup can fail when localStorage is unavailable
 Severity: High  
-Status: Ready for Builder  
+Status: Retest Needed  
 Location: `storage.js` app startup/storage helpers  
 
 Steps to reproduce:
@@ -138,7 +138,7 @@ Details:
 - Do not stop after this fix. After fixing, run build/test/lint and continue to the next issue.
 
 Retest notes:
-Pending.
+Builder fix complete. Added safe storage helpers with in-memory fallback for items, language, and scanner endpoint when localStorage access/getItem/setItem/removeItem fails. Added storage regression coverage for throwing localStorage methods. `npm test` and `npm run build` passed.
 
 ---
 
