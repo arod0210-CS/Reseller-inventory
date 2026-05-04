@@ -77,7 +77,7 @@ Passed QA retest. Manual Node regression confirms selling 1 of 2 units leaves qu
 
 ### Issue 003: Empty scanner lookup creates invalid draft text
 Severity: Medium  
-Status: Retest Needed  
+Status: Passed  
 Location: `scanner.js` → `generateItemDescription()` / `runScannerLookup()`  
 
 Steps to reproduce:
@@ -105,13 +105,13 @@ Details:
 - Do not stop after this fix. After fixing, run build/test/lint and continue to the next issue.
 
 Retest notes:
-Builder update: empty scanner lookups now validate with a clear “enter barcode or upload photo” message and return no draft; UI shows the validation without filling draft fields; `generateItemDescription()` no longer stringifies empty input objects. Added scanner regression coverage. `npm test` and `npm run build` passed.
+Passed QA retest. Manual scanner regression confirms `runScannerLookup({})` returns `draft: null`, `validationError: true`, and a clear validation message. `generateItemDescription({})` returns an empty string with no `objectObject` text. `npm test` and `npm run build` passed after retest.
 
 ---
 
 ### Issue 004: App startup can fail when localStorage is unavailable
 Severity: High  
-Status: Open  
+Status: Ready for Builder  
 Location: `storage.js` app startup/storage helpers  
 
 Steps to reproduce:
