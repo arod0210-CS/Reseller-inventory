@@ -251,9 +251,10 @@
   }
 
   function generateItemDescription(input) {
-    const barcode = cleanBarcode(input && input.barcode ? input.barcode : input);
-    const name = input && input.name ? input.name : buildNameFromBarcode(barcode);
-    if (input && input.lookup && input.lookup.description) {
+    const isInputObject = input && typeof input === "object";
+    const barcode = cleanBarcode(isInputObject ? input.barcode : input);
+    const name = isInputObject && input.name ? trimParts(input.name) : buildNameFromBarcode(barcode);
+    if (isInputObject && input.lookup && input.lookup.description) {
       return Promise.resolve(input.lookup.description);
     }
     if (input && input.imageDataUrl && barcode) {
@@ -330,7 +331,17 @@
 
   async function runScannerLookup(config) {
     const imageDataUrl = config && config.imageDataUrl ? config.imageDataUrl : "";
-    const barcode = cleanBarcode(config && config.barcode ? config.barcode : "") || await detectBarcodeFromDataUrl(imageDataUrl);
+    const typedBarcode = cleanBarcode(config && config.barcode ? config.barcode : "");
+
+    if (!typedBarcode && !imageDataUrl) {
+      return {
+        draft: null,
+        message: "Enter a barcode or upload a photo before scanning.",
+        validationError: true
+      };
+    }
+
+    const barcode = typedBarcode || await detectBarcodeFromDataUrl(imageDataUrl);
     const lookup = await lookupAiBackend({
       barcode: barcode,
       imageDataUrl: imageDataUrl,

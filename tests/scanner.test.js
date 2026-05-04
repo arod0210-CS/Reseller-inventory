@@ -8,6 +8,26 @@ vm.runInContext(fs.readFileSync('scanner.js', 'utf8'), context);
 const scanner = context.window.PalletFlowScanner;
 
 (async function run() {
+  let fetchCalledForEmptyLookup = false;
+  context.window.fetch = async function () {
+    fetchCalledForEmptyLookup = true;
+    throw new Error('Empty lookup should not call fetch');
+  };
+
+  const emptyLookup = await scanner.runScannerLookup({});
+  assert.equal(emptyLookup.draft, null);
+  assert.equal(emptyLookup.validationError, true);
+  assert.match(emptyLookup.message, /barcode or upload a photo/i);
+  assert.equal(fetchCalledForEmptyLookup, false);
+
+  const emptyDescription = await scanner.generateItemDescription({});
+  assert.equal(emptyDescription, '');
+  const photoDescription = await scanner.generateItemDescription({ imageDataUrl: 'data:image/jpeg;base64,photo' });
+  assert.ok(photoDescription.includes('Photo captured'));
+  assert.doesNotMatch(photoDescription, /object Object|objectObject/i);
+
+  delete context.window.fetch;
+
   const known = await scanner.runScannerLookup({ barcode: '036000291452', imageDataUrl: 'data:image/jpeg;base64,test' });
   assert.equal(known.draft.name, 'Kleenex Tissue Pack');
   assert.equal(known.draft.category, 'home');

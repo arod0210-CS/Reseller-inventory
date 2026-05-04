@@ -77,7 +77,7 @@ Passed QA retest. Manual Node regression confirms selling 1 of 2 units leaves qu
 
 ### Issue 003: Empty scanner lookup creates invalid draft text
 Severity: Medium  
-Status: Ready for Builder  
+Status: Retest Needed  
 Location: `scanner.js` → `generateItemDescription()` / `runScannerLookup()`  
 
 Steps to reproduce:
@@ -105,7 +105,7 @@ Details:
 - Do not stop after this fix. After fixing, run build/test/lint and continue to the next issue.
 
 Retest notes:
-Pending.
+Builder update: empty scanner lookups now validate with a clear “enter barcode or upload photo” message and return no draft; UI shows the validation without filling draft fields; `generateItemDescription()` no longer stringifies empty input objects. Added scanner regression coverage. `npm test` and `npm run build` passed.
 
 ---
 

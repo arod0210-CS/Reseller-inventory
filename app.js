@@ -1605,6 +1605,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function runScannerLookup() {
+    if (!refs.scannerBarcodeInput.value.trim() && !scannerImageData) {
+      scannerToastMessage = "";
+      showToast(t("scannerInputRequired"));
+      refs.scannerBarcodeInput.focus();
+      return;
+    }
+
     const previousLabel = refs.scannerTryBtn.textContent;
     refs.scannerTryBtn.disabled = true;
     refs.scannerUseBtn.disabled = true;
@@ -1615,6 +1622,13 @@ document.addEventListener("DOMContentLoaded", function () {
         barcode: refs.scannerBarcodeInput.value,
         imageDataUrl: scannerImageData
       });
+
+      if (!result.draft) {
+        scannerToastMessage = "";
+        showToast(result.message || t("scannerInputRequired"));
+        refs.scannerBarcodeInput.focus();
+        return;
+      }
 
       refs.scannerBarcodeInput.value = result.draft.originalBarcode || refs.scannerBarcodeInput.value;
       refs.scannerName.value = result.draft.name || refs.scannerName.value;
