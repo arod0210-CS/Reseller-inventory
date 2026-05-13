@@ -1,4 +1,5 @@
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
@@ -42,61 +43,85 @@ function cleanDraft(value) {
   };
 }
 
-async function callOpenAI({ barcode, imageDataUrl }) {
-  const apiKey = process.env.OPENAI_API_KEY;
+function parseDataUrl(dataUrl) {
+  const comma = dataUrl.indexOf(",");
+  if (comma < 0) return null;
+  const meta = dataUrl.slice(0, comma);
+  const data = dataUrl.slice(comma + 1);
+  const mediaTypeMatch = meta.match(/data:([^;]+);base64/);
+  if (!mediaTypeMatch) return null;
+  return { mediaType: mediaTypeMatch[1], data };
+}
+
+function extractJson(text) {
+  if (!text) return "{}";
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) return codeBlock[1].trim();
+  const braceBlock = text.match(/(\{[\s\S]*\})/);
+  if (braceBlock) return braceBlock[1].trim();
+  return text.trim();
+}
+
+async function callClaude({ barcode, imageDataUrl }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return null;
   }
 
-  const content = [
-    {
-      type: "text",
-      text: [
-        "You identify resale inventory items from a barcode and/or image.",
-        "Return only JSON with keys: name, description, category, estimatedPrice.",
-        "Allowed categories: electronics, appliances, tools, furniture, home, clothing, toys, vintage, other.",
-        "Use cautious estimates and remind the user to verify condition/comps in the description.",
-        barcode ? "Barcode/UPC: " + barcode : "No barcode provided."
-      ].join(" ")
-    }
-  ];
+  const textContent = {
+    type: "text",
+    text: [
+      "You identify resale inventory items from a barcode and/or image.",
+      "Return only JSON with keys: name, description, category, estimatedPrice.",
+      "Allowed categories: electronics, appliances, tools, furniture, home, clothing, toys, vintage, other.",
+      "Use cautious estimates and remind the user to verify condition/comps in the description.",
+      barcode ? "Barcode/UPC: " + barcode : "No barcode provided."
+    ].join(" ")
+  };
+
+  const userContent = [textContent];
 
   if (imageDataUrl) {
-    content.push({
-      type: "image_url",
-      image_url: { url: imageDataUrl }
-    });
+    const parsed = parseDataUrl(imageDataUrl);
+    if (parsed) {
+      userContent.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: parsed.mediaType,
+          data: parsed.data
+        }
+      });
+    }
   }
 
-  const response = await fetch(OPENAI_API_URL, {
+  const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
-      "Authorization": "Bearer " + apiKey,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_SCANNER_MODEL || "gpt-4o-mini",
-      response_format: { type: "json_object" },
+      model: process.env.ANTHROPIC_SCANNER_MODEL || ANTHROPIC_MODEL,
+      max_tokens: 256,
+      system: "You create concise, safe reseller inventory drafts. Return only valid JSON. Never invent certainty; include verification guidance.",
       messages: [
         {
-          role: "system",
-          content: "You create concise, safe reseller inventory drafts. Never invent certainty; include verification guidance."
-        },
-        {
           role: "user",
-          content: content
+          content: userContent
         }
       ]
     })
   });
 
   if (!response.ok) {
-    throw new Error("OpenAI request failed with status " + response.status);
+    throw new Error("Anthropic request failed with status " + response.status);
   }
 
   const payload = await response.json();
-  const text = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
-  return cleanDraft(JSON.parse(text || "{}"));
+  const text = payload && payload.content && payload.content[0] && payload.content[0].text;
+  return cleanDraft(JSON.parse(extractJson(text)));
 }
 
 module.exports = async function handler(req, res) {
@@ -120,9 +145,9 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const draft = await callOpenAI({ barcode, imageDataUrl });
+    const draft = await callClaude({ barcode, imageDataUrl });
     if (!draft) {
-      sendJson(res, 501, { error: "OPENAI_API_KEY is not configured on the backend." });
+      sendJson(res, 501, { error: "ANTHROPIC_API_KEY is not configured on the backend." });
       return;
     }
 

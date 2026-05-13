@@ -112,7 +112,9 @@ document.addEventListener("DOMContentLoaded", function () {
     profileLastUpdated: document.getElementById("profileLastUpdated"),
     profileCategories: document.getElementById("profileCategories"),
     scannerEndpointInput: document.getElementById("scannerEndpointInput"),
+    scannerBackendStatus: document.getElementById("scannerBackendStatus"),
     saveScannerEndpointBtn: document.getElementById("saveScannerEndpointBtn"),
+    testScannerEndpointBtn: document.getElementById("testScannerEndpointBtn"),
     clearScannerEndpointBtn: document.getElementById("clearScannerEndpointBtn"),
     profileAddBtn: document.getElementById("profileAddBtn"),
     profileScannerBtn: document.getElementById("profileScannerBtn"),
@@ -1682,16 +1684,42 @@ document.addEventListener("DOMContentLoaded", function () {
     showToast(t("languageSaved"));
   }
 
+  function updateScannerStatus() {
+    const endpoint = storage.getScannerEndpoint();
+    if (refs.scannerBackendStatus) {
+      refs.scannerBackendStatus.textContent = endpoint ? t("scannerStatusConnected") : t("scannerStatusNotConfigured");
+      refs.scannerBackendStatus.style.color = endpoint ? "#0d9488" : "";
+    }
+  }
+
   function saveScannerEndpointSetting() {
     const value = storage.saveScannerEndpoint(refs.scannerEndpointInput.value);
     refs.scannerEndpointInput.value = value;
     showToast(value ? t("scannerEndpointSaved") : t("scannerEndpointCleared"));
+    updateScannerStatus();
   }
 
   function clearScannerEndpointSetting() {
     refs.scannerEndpointInput.value = "";
     storage.saveScannerEndpoint("");
     showToast(t("scannerEndpointCleared"));
+    updateScannerStatus();
+  }
+
+  function testScannerEndpointSetting() {
+    const endpoint = (refs.scannerEndpointInput.value || "").trim();
+    if (!endpoint) {
+      showToast(t("scannerTestFailed"));
+      return;
+    }
+    fetch(endpoint, {
+      method: "OPTIONS",
+      signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+    }).then(function (res) {
+      showToast(res.ok || res.status < 500 ? t("scannerTestSuccess") : t("scannerTestFailed"));
+    }).catch(function () {
+      showToast(t("scannerTestFailed"));
+    });
   }
 
   function handleItemActionClick(event) {
@@ -1948,14 +1976,15 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!item) {
       return;
     }
-    labels.copyItemId(item.itemId).then(function () {
-      showToast(t("copiedIdToast"));
+    labels.copyItemId(item.itemId).then(function (success) {
+      showToast(success ? t("copiedIdToast") : t("copyIdFailedToast"));
     });
   });
 
   refs.exportCsvBtn.addEventListener("click", exportCsv);
   refs.resetDemoBtn.addEventListener("click", resetDemoData);
   refs.saveScannerEndpointBtn.addEventListener("click", saveScannerEndpointSetting);
+  refs.testScannerEndpointBtn.addEventListener("click", testScannerEndpointSetting);
   refs.clearScannerEndpointBtn.addEventListener("click", clearScannerEndpointSetting);
 
   navItems.forEach(function (item) {
@@ -2046,6 +2075,7 @@ document.addEventListener("DOMContentLoaded", function () {
   resetFullForm();
   resetScannerForm();
   refs.scannerEndpointInput.value = storage.getScannerEndpoint();
+  updateScannerStatus();
   captureItemSheetSnapshot();
   captureTransactionSnapshot();
   refs.inventorySortSelect.value = state.inventorySort;

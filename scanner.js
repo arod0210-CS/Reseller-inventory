@@ -77,7 +77,54 @@
     if (KNOWN_PRODUCTS[cleaned]) {
       return Promise.resolve(Object.assign({ source: "Demo catalog" }, KNOWN_PRODUCTS[cleaned]));
     }
-    return lookupOpenFoodFacts(cleaned);
+    return lookupUPCitemdb(cleaned).then(function (result) {
+      return result || lookupOpenFoodFacts(cleaned);
+    });
+  }
+
+  function lookupUPCitemdb(barcode) {
+    const cleaned = cleanBarcode(barcode);
+    const fetcher = getFetch();
+    if (!fetcher || !/^\d{8,14}$/.test(cleaned)) {
+      return Promise.resolve(null);
+    }
+    const endpoint = "https://api.upcitemdb.com/prod/trial/lookup?upc=" + encodeURIComponent(cleaned);
+    return fetchJsonWithTimeout(endpoint, undefined, PRODUCT_LOOKUP_TIMEOUT_MS).then(function (payload) {
+      if (!payload || payload.code !== "OK" || !Array.isArray(payload.items) || !payload.items[0]) {
+        return null;
+      }
+      return normalizeUPCitemdbProduct(payload.items[0]);
+    });
+  }
+
+  function normalizeUPCitemdbProduct(item) {
+    const brand = trimParts(item.brand);
+    const title = trimParts(item.title || "");
+    const name = title || (brand ? brand + " Product" : "Scanned Product");
+    const categoryText = [item.category, name, trimParts(item.description)].filter(Boolean).join(" ");
+    const category = inferCategory(categoryText);
+    const lowestPrice = Number(item.lowest_recorded_price);
+    const highestPrice = Number(item.highest_recorded_price);
+    const hasLow = Number.isFinite(lowestPrice) && lowestPrice > 0;
+    const hasHigh = Number.isFinite(highestPrice) && highestPrice > 0;
+    const estimatedPrice = hasLow
+      ? Math.round(((lowestPrice + (hasHigh ? highestPrice : lowestPrice)) / 2) * 100) / 100
+      : PRICE_BY_CATEGORY[category];
+    const imageUrl = Array.isArray(item.images) && item.images[0] ? trimParts(item.images[0]) : "";
+    const description = [
+      "Matched retail product database.",
+      brand ? "Brand: " + brand + "." : "",
+      "Verify condition and resale comps before listing."
+    ].filter(Boolean).join(" ");
+
+    return {
+      name: name,
+      description: description,
+      category: category,
+      estimatedPrice: estimatedPrice,
+      imageUrl: imageUrl,
+      source: "UPCitemdb"
+    };
   }
 
   function getFetch() {
@@ -380,6 +427,7 @@
 
   global.PalletFlowScanner = {
     lookupBarcode: lookupBarcode,
+    lookupUPCitemdb: lookupUPCitemdb,
     lookupAiBackend: lookupAiBackend,
     lookupOpenFoodFacts: lookupOpenFoodFacts,
     detectBarcodeFromDataUrl: detectBarcodeFromDataUrl,
