@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PalletFlow</string>
+    <string name="title_activity_main">PalletFlow</string>
+    <string name="package_name">com.palletflow.inventory</string>
+    <string name="custom_url_scheme">com.palletflow.inventory</string>
+</resources>

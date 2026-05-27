@@ -1,0 +1,13 @@
+{
+  "appId": "com.palletflow.inventory",
+  "appName": "PalletFlow",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
